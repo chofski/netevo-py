@@ -3,7 +3,10 @@
 STUFF
 """
 
-
+# So that we can run the examples without netevo necessarily being 
+# in the system path.
+import sys
+sys.path.append('../netevo-py')
 import netevo
 
 import math
@@ -84,32 +87,31 @@ def visual_reporter (G, t):
 	node states for the system.
 	"""
 	plt.clf()
-	print t
 	pos=nx.circular_layout(G)
 	n_sizes = []
 	for i in G.nodes():
 		n_sizes.append(100.0 * G.node[i]['state'])
 	nx.draw(G, pos, node_size=n_sizes)
 	fig.canvas.draw()
-	#node_color=node_color,
-	#with_labels=False)
 
 G2 = nx.Graph()
 G2.graph['node_dyn'] = True
 G2.graph['edge_dyn'] = True
 
+n_nodes = 100
+
 G2.add_node(0)
-G2.node[0]['state'] = 0.1
 G2.node[0]['dyn'] = kuramoto_node_dyn
 G2.node[0]['params'] = [0.2, 0.1]
 
-G2.add_node(1)
-G2.node[1]['state'] = 0.5
-G2.node[1]['dyn'] = kuramoto_node_dyn
-G2.node[1]['params'] = [0.2, 0.1]
-
-G2.add_edge(0,1)
-G2.edge[0][1]['state'] = 0.01
-G2.edge[0][1]['dyn'] = no_edge_dyn
+for i in range(1, n_nodes):
+	G2.add_node(i)
+	G2.node[i]['dyn'] = kuramoto_node_dyn
+	G2.node[i]['params'] = [0.2, 0.1]
+	G2.add_edge(i-1,i)
+	G2.edge[i-1][i]['dyn'] = no_edge_dyn
+	
+netevo.rnd_uniform_node_states (G2, [(0.0, 0.5)])
+netevo.rnd_uniform_edge_states (G2, [(0.0, 0.1)])
 
 netevo.simulate_steps (G2, 100, visual_reporter)

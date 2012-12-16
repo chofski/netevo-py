@@ -1,27 +1,26 @@
-"""
-============================================================================
-NetEvo for Python
-Copyright (C) 2012 Thomas E. Gorochowski <tom@chofski.co.uk>
----------------------------------------------------------------------------- 
-NetEvo is a computing framework designed to allow researchers to investigate 
-evolutionary aspects of dynamical complex networks. By providing tools to 
-easily integrate each of these factors in a coherent way, it is hoped a 
-greater understanding can be gained of key attributes and features displayed 
-by complex systems.
-
-NetEvo is open-source software released under the Open Source Initiative 
-(OSI) approved Non-Profit Open Software License ("Non-Profit OSL") 3.0. 
-Detailed information about this licence can be found in the COPYING file 
-included as part of the source distribution.
-
-This library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-============================================================================
-"""
+# ============================================================================
+# NetEvo for Python
+# Copyright (C) 2012 Thomas E. Gorochowski <tom@chofski.co.uk>
+# ---------------------------------------------------------------------------- 
+# NetEvo is a computing framework designed to allow researchers to investigate 
+# evolutionary aspects of dynamical complex networks. By providing tools to 
+# easily integrate each of these factors in a coherent way, it is hoped a 
+# greater understanding can be gained of key attributes and features displayed 
+# by complex systems.
+# 
+# NetEvo is open-source software released under the Open Source Initiative 
+# (OSI) approved Non-Profit Open Software License ("Non-Profit OSL") 3.0. 
+# Detailed information about this licence can be found in the COPYING file 
+# included as part of the source distribution.
+# 
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# ============================================================================
 
 
 import math
+import random
 import networkx as nx
 import numpy    as np
 
@@ -282,6 +281,46 @@ def state_reporter (G, t):
 	for i in G.nodes():
 		output += str(G.node[i]['state']) + ', '
 	print output
+
+
+def rnd_uniform_node_states (G, state_range):
+	"""
+	Set the state of each node within the network to a random state in the
+	ranges specified in the state_range list. This has the form,
+	   state_range = [(1min, 1max), (2min, 2max)...]
+	up to the number of states required per node.
+	"""
+	if len(state_range) == 1:
+		r1 = state_range[0][0]
+		r2 = state_range[0][1]
+		for n in G.nodes():
+			G.node[n]['state'] = random.uniform(r1, r2)
+	else:
+		for n in G.nodes():
+			n_state = []
+			for s in len(state_range):
+				n_state.append(random.uniform(state_range[s][0], state_range[s][0]))
+			G.node[n]['state'] = np.array(n_state)
+
+
+def rnd_uniform_edge_states (G, state_range):
+	"""
+	Set the state of each edge within the network to a random state in the
+	ranges specified in the state_range list. This has the form,
+	   state_range = [(1min, 1max), (2min, 2max)...]
+	up to the number of states required per edge.
+	"""
+	if len(state_range) == 1:
+		r1 = state_range[0][0]
+		r2 = state_range[0][1]
+		for e in G.edges():
+			G.edge[e[0]][e[1]]['state'] = random.uniform(r1, r2)
+	else:
+		for e in G.edges():
+			e_state = []
+			for s in len(state_range):
+				e_state.append(random.uniform(state_range[s][0], state_range[s][0]))
+			G.edge[e[0]][e[1]]['state'] = np.array(e_state)
 
 
 ####################################################
