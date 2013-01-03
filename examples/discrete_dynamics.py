@@ -1,29 +1,32 @@
 #!/usr/bin/python
 """
-STUFF
+discrete_dynamics.py
+
+NetEvo example showing how a discrete node dynamics can be simulated. A ring
+network of identical kuramoto nodes is created and each node given a random
+initial state. Nodes are diffusely coupled along the edges and simulation of
+the network sees a fast convergence to a synchronised state. Output from the
+simulation is printed to the screen.
 """
+
+#=========================================
+# IMPORT THE LIBRARIES
+#=========================================
 
 # So that we can run the examples without netevo necessarily being 
 # in the system path.
 import sys
 sys.path.append('../netevo-py')
 import netevo
-
 import math
 import networkx as nx
-import numpy as np
-import matplotlib.pyplot as plt
 
+#=========================================
+# DEFINE THE DYNAMICS
+#=========================================
 
-def no_node_dyn (G, n, t, state):
-	return 0.0
-
-
-def no_edge_dyn (G, source, target, t, state):
-	return 0.0
-
-
-def kuramoto_node_dyn (G, n, t, state):	
+# Define a function for the discrete node dynamics
+def kuramoto_node_dyn (G, n, t, state):
 	# Parameters
 	cur_params = G.node[n]['params']
 	natural_freq = cur_params[0]
@@ -33,85 +36,42 @@ def kuramoto_node_dyn (G, n, t, state):
 	sum_coupling = 0.0
 	for i in G[n]:
 		sum_coupling += math.sin(G.node[i]['state'] - state)
+		
+	# Calcuate the new state of the node and return the value
 	return math.fmod(state + natural_freq + (coupling_strength * sum_coupling), 6.283)
-	
 
-def rossler_node_dyn (G, n, t, state):	
-	# Parameters
-	cur_params = G.node[n]['params']
-	sigma = cur_params[0]
-	rho = cur_params[1]
-	beta = cur_params[2]
+#=========================================
+# CREATE THE DYNAMICAL NETWORK
+#=========================================
 
-	# Calculate the new state value
-	c = np.zeros(np.size(state,0))
-	coupling = 0.1
-	for i in G[n]:
-		c += -coupling * (G.node[i]['state'] - state)
-	
-	v1 = (sigma    * (state[1] - state[0]))       - c[0]
-	v2 = (state[0] * (rho - state[2]) - state[1]) - c[1]
-	v3 = (state[0] * state[1] - beta * state[2])  - c[2]
-	
-	return np.array([v1, v2, v3])
-
-
-# Test the continuous dynamics
-
-G1 = nx.Graph()
-G1.graph['node_dyn'] = True
-G1.graph['edge_dyn'] = False
-
-G1.add_node(0)
-G1.node[0]['state'] = np.array([2.6, 0.8, 0.9])
-G1.node[0]['dyn'] = rossler_node_dyn
-G1.node[0]['params'] = [28.0, 10.0, 8.0/3.0]
-
-G1.add_node(1)
-G1.node[1]['state'] = np.array([1.2, 2.3, 0.2])
-G1.node[1]['dyn'] = rossler_node_dyn
-G1.node[1]['params'] = [28.0, 10.0, 8.0/3.0]
-
-G1.add_edge(0,1)
-
-netevo.simulate_rk45 (G1, 2.0, netevo.state_reporter)
-
-
-# Test the discrete dynamics
-
-fig = plt.figure()
-
-def visual_reporter (G, t):
-	"""
-	Standard simulation state reporter that outputs the current time and
-	node states for the system.
-	"""
-	plt.clf()
-	pos=nx.circular_layout(G)
-	n_sizes = []
-	for i in G.nodes():
-		n_sizes.append(100.0 * G.node[i]['state'])
-	nx.draw(G, pos, node_size=n_sizes)
-	fig.canvas.draw()
-
+# Create an empty graph (undirected)
 G2 = nx.Graph()
+
+# We only need node dynamics
 G2.graph['node_dyn'] = True
-G2.graph['edge_dyn'] = True
+G2.graph['edge_dyn'] = False
 
-n_nodes = 100
-
+# Create the network of n nodes connected in a ring
+n_nodes = 4
 G2.add_node(0)
 G2.node[0]['dyn'] = kuramoto_node_dyn
 G2.node[0]['params'] = [0.2, 0.1]
-
 for i in range(1, n_nodes):
+	# Create the node
 	G2.add_node(i)
+	# Set the dynamics of the new node
 	G2.node[i]['dyn'] = kuramoto_node_dyn
+	# All nodes have identical dynamical parameters
 	G2.node[i]['params'] = [0.2, 0.1]
+	# Connect it to the previous node in the ring
 	G2.add_edge(i-1,i)
-	G2.edge[i-1][i]['dyn'] = no_edge_dyn
-	
-netevo.rnd_uniform_node_states (G2, [(0.0, 0.5)])
-netevo.rnd_uniform_edge_states (G2, [(0.0, 0.1)])
 
-netevo.simulate_steps (G2, 100, visual_reporter)
+# Set the initial state to a random number in the range (0, 6.0)
+netevo.rnd_uniform_node_states (G2, [(0.0, 6.0)])
+
+#=========================================
+# SIMULATE THE NETWORK DYNAMICS
+#=========================================
+
+# Simulate the dynamics and print the state to the screen
+netevo.simulate_steps (G2, 100, netevo.state_reporter)

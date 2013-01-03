@@ -106,7 +106,7 @@ def simulate_midpoint (G, t_max, reporter, h=0.01):
 			for e in G.edges():
 				cur_edge = G.edge[e[0]][e[1]]
 				cur_state = cur_edge['state']
-				p1 = (h / 2.0) * cur_edge['dyn'](G, n, t, cur_state)
+				p1 = (h / 2.0) * cur_edge['dyn'](G, e[0], e[1], t, cur_state)
 				cur_edge['new_state'] = cur_state + (h * cur_edge['dyn'](G, n, t + (h / 2.0), cur_state + p1))
 		
 		# Shift state
@@ -208,13 +208,13 @@ def simulate_rk45 (G, t_max, reporter, h=0.01, adaptive=False, tol=1e-5):
 			for e in G.edges():
 				cur_edge = G.edge[e[0]][e[1]]
 				cur_state = cur_edge['state']
-				K1 = cur_edge['dyn'](G, n, t, cur_state)
-				K2 = cur_edge['dyn'](G, n, t + c2*h, cur_state+h*(a21*K1))
-				K3 = cur_edge['dyn'](G, n, t + c3*h, cur_state+h*(a31*K1+a32*K2))
-				K4 = cur_edge['dyn'](G, n, t + c4*h, cur_state+h*(a41*K1+a42*K2+a43*K3))
-				K5 = cur_edge['dyn'](G, n, t + c5*h, cur_state+h*(a51*K1+a52*K2+a53*K3+a54*K4))
-				K6 = cur_edge['dyn'](G, n, t + h,    cur_state+h*(a61*K1+a62*K2+a63*K3+a64*K4+a65*K5))
-				K7 = cur_edge['dyn'](G, n, t + h,    cur_state+h*(a71*K1+a72*K2+a73*K3+a74*K4+a75*K5+a76*K6))
+				K1 = cur_edge['dyn'](G, e[0], e[1], t, cur_state)
+				K2 = cur_edge['dyn'](G, e[0], e[1], t + c2*h, cur_state+h*(a21*K1))
+				K3 = cur_edge['dyn'](G, e[0], e[1], t + c3*h, cur_state+h*(a31*K1+a32*K2))
+				K4 = cur_edge['dyn'](G, e[0], e[1], t + c4*h, cur_state+h*(a41*K1+a42*K2+a43*K3))
+				K5 = cur_edge['dyn'](G, e[0], e[1], t + c5*h, cur_state+h*(a51*K1+a52*K2+a53*K3+a54*K4))
+				K6 = cur_edge['dyn'](G, e[0], e[1], t + h,    cur_state+h*(a61*K1+a62*K2+a63*K3+a64*K4+a65*K5))
+				K7 = cur_edge['dyn'](G, e[0], e[1], t + h,    cur_state+h*(a71*K1+a72*K2+a73*K3+a74*K4+a75*K5+a76*K6))
 				cur_edge['new_state'] = cur_state + (h * (b1*K1+b3*K3+b4*K4+b5*K5+b6*K6))
 		  
 		# Shift state
@@ -298,8 +298,8 @@ def rnd_uniform_node_states (G, state_range):
 	else:
 		for n in G.nodes():
 			n_state = []
-			for s in len(state_range):
-				n_state.append(random.uniform(state_range[s][0], state_range[s][0]))
+			for s in range(len(state_range)):
+				n_state.append(random.uniform(state_range[s][0], state_range[s][1]))
 			G.node[n]['state'] = np.array(n_state)
 
 
@@ -318,9 +318,28 @@ def rnd_uniform_edge_states (G, state_range):
 	else:
 		for e in G.edges():
 			e_state = []
-			for s in len(state_range):
-				e_state.append(random.uniform(state_range[s][0], state_range[s][0]))
+			for s in range(len(state_range)):
+				e_state.append(random.uniform(state_range[s][0], state_range[s][1]))
 			G.edge[e[0]][e[1]]['state'] = np.array(e_state)
+
+
+####################################################
+# DYNAMICS LIBRARY
+####################################################
+
+
+def no_node_dyn (G, n, t, state):
+	"""
+	No node dynamics to be used as a null form of node dynamics.
+	"""
+	return 0.0
+
+
+def no_edge_dyn (G, source, target, t, state):
+	"""
+	No edge dynamics to be used as a null form of edge dynamics.
+	"""
+	return 0.0
 
 
 ####################################################
