@@ -1,8 +1,8 @@
 #!/usr/bin/python
 """
-evolution_sa.py
+evolution_sa_.py
 
-This example introduces the concept of evolution using a simulated annealing
+NetEvo example that introduces the concept of evolution using a simulated annealing
 metaheuristic. The user must provide functions that quantify a performance
 measure (smaller is better - like a cost) and a mutation that should be 
 performed to search for new network topologies. The performance function used
@@ -25,13 +25,12 @@ import networkx as nx
 import random
 import numpy as np
 import numpy.linalg as linalg
-import matplotlib.pyplot as plt
 
 #=========================================
-# DEFINE MUTATIONS
+# DEFINE MUTATION FUNCTION
 #=========================================
 
-# Define a function for searching for new networks
+# Define a function for searching for new networks (random rewire)
 def rewire (G):
 	n_to_rewire = int(random.expovariate(4.0))
 	if n_to_rewire < 1:
@@ -51,15 +50,15 @@ def eigenratio (G):
 		idx = eigenvalues.argsort()   
 		eigenvalues = eigenvalues[idx]
 		return eigenvalues[-1]/eigenvalues[1]
-	# The network is not connected -  it is not valid
+	# If the network is not connected it is not valid
 	return float('inf')
 
 #=========================================
 # CREATE THE NETWORK
 #=========================================
 
-# Create a random graph, but check that it is valid
-n = 100
+# Create a random undirected graph and check valid (n=50, m=100)
+n = 50
 G = []
 while True:
 	G = nx.gnm_random_graph(n, 2*n)

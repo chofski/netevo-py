@@ -446,7 +446,7 @@ def evolve_sa_trail (cur_temp, cur_perf, G, mut_fn, perf_fn):
 	return False, G, cur_perf
 
 
-#def evolve_ga (G_pop, init_fn, perf_fn, repoduce_fn, max_iter=10000, reporter=evo_ga_reporter, simulate_dyn=True):
+#def evolve_ga (G_pop, perf_fn, repoduce_fn, max_iter=10000, reporter=evo_ga_reporter, simulate_dyn=True):
 	"""
 	Evolves a population of networks using a genetic algorithm metaheuristic. Runs 
 	each simulation step as a separate process to make use of multi-processor systems.
