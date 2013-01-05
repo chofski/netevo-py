@@ -347,3 +347,155 @@ def no_edge_dyn (G, source, target, t, state):
 ####################################################
 
 
+def random_rewire (G, n):
+	nodes = G.nodes()
+	edges = G.edges()
+	for i in range(n):
+		# Pick a random edge
+		(u, v) = edges[int(random.random()*G.number_of_edges())]
+		# Attempt to find a new random edge (maximum 1000 trials)
+		trial = 0
+		while trial < 1000:
+			new_u = int(random.random()*len(G))
+			new_v = int(random.random()*len(G))
+			if new_u != new_v and G.has_edge(nodes[new_u], nodes[new_v]) == False:
+				break
+			trial += 1	
+		# Rewire if max trials not reached
+		if trial >= 1000:
+			print 'WARNING: Could not rewire edge - max trials exceeded'
+		else:
+			# Rewire it
+			G.remove_edge(u, v)
+			G.add_edge(nodes[new_u], nodes[new_v])
+
+
+def evo_sa_reporter (G, G_perf, iteration):
+	print 'Iteration: ', iteration, ', Performance = ', G_perf
+
+
+def evolve_sa (G, perf_fn, mut_fn, max_iter=100000, max_no_change=100, initial_temp=100000000000.0, min_temp=0.001, reporter=evo_sa_reporter):
+	"""
+	Evolves a network using a simulated annealing metaheuristic.
+	"""
+	# Copy the system and set initial process variables
+	cur_G = G.copy()
+	iteration = 0
+	cur_temp = initial_temp
+	
+	# Calculate the initial performance
+	cur_perf = perf_fn(cur_G)
+		
+	# Observe the inital system
+	reporter(cur_G, cur_perf, iteration)
+
+	no_change = 0	
+	if cur_temp > 0.0:
+		while no_change <= max_no_change and cur_temp > min_temp and iteration <= max_iter:
+			iteration += 1
+			# Run a trial
+			accept, new_G, G_perf = evolve_sa_trail(cur_temp, cur_perf, cur_G, mut_fn, perf_fn)
+			if accept:
+				cur_G = new_G
+				cur_perf = G_perf
+				no_change = 0
+			else:
+				no_change += 1
+			# Observe the current system
+			reporter(cur_G, cur_perf, iteration)
+			# Reduce the temperature
+			cur_temp *= 0.99			
+	else:
+		print 'WARNING: Initial temperature was <= 0.0'
+	
+	return iteration, cur_G
+
+
+def boltzmann_accept_prob (d_perf, temperature):
+	return math.exp( d_perf / temperature );
+
+
+def evolve_sa_trail (cur_temp, cur_perf, G, mut_fn, perf_fn):
+	# Make a copy of the system
+	G_copy = G.copy()
+	
+	# Mutate the system
+	mut_fn(G_copy)
+	
+	# Estimate performance
+	new_perf = perf_fn(G_copy)
+	
+	if new_perf == float('inf'):
+		# Do not accept change
+		return False, G, cur_perf
+	
+	d_perf =  cur_perf - new_perf
+	if d_perf > 0.0:
+		# Accept improvement
+		return True, G_copy, new_perf
+	else:
+		# Ensure positive temperature
+		if cur_temp > 0.0:
+			# Randomly accept in relation to temperature
+			if random.random() <= boltzmann_accept_prob(d_perf, cur_temp):
+				return True, G_copy, new_perf
+		else:
+			print 'WARNING: Zero or negative temperature (evolve_sa_trail)'
+	
+	# Mutation not accepted
+	return False, G, cur_perf
+
+
+#def evolve_ga (G_pop, init_fn, perf_fn, repoduce_fn, max_iter=10000, reporter=evo_ga_reporter, simulate_dyn=True):
+	"""
+	Evolves a population of networks using a genetic algorithm metaheuristic. Runs 
+	each simulation step as a separate process to make use of multi-processor systems.
+	"""
+#	return True	
+
+
+####################################################
+# UTILITY FUNCTIONS
+####################################################
+
+
+def write_graphml (G, path):
+	"""
+	Writes a netevo graph to a suitably formatted GraphML file for use in 
+	external applications such as Cytoscape. This should be used instead of
+	the networkx functions as Cytoscape does not correctly handle non-string
+	based labels or lists (often used for parameters).
+	"""
+	G_copy = G.copy()
+	if G_copy.graph['node_dyn'] == True:
+		for n in G_copy.nodes():
+			G_copy.node[n]['label'] = str(n)
+			G_copy.node[n]['dyn'] = str(G_copy.node[n]['dyn'])
+			G_copy.node[n]['params'] = str(G_copy.node[n]['params'])
+	if G_copy.graph['edge_dyn'] == True:
+		for n in G_copy.edges():
+			G_copy.edge[e[0]][e[1]]['dyn'] = str(G_copy.edge[e[0]][e[1]]['dyn'])
+			G_copy.edge[e[0]][e[1]]['params'] = str(G_copy.edge[e[0]][e[1]]['params'])
+	nx.write_graphml(G_copy, path)
+
+
+def write_gml (G, path):
+	"""
+	Writes a netevo graph to a suitably formatted GML (Graphlet) file for use in 
+	external applications such as Cytoscape. This should be used instead of
+	the networkx functions as Cytoscape does not correctly handle non-string
+	based labels or lists (often used for parameters).
+	"""
+	G_copy = G.copy()
+	if G_copy.graph['node_dyn'] == True:
+		for n in G_copy.nodes():
+			G_copy.node[n]['label'] = str(n)
+			G_copy.node[n]['dyn'] = str(G_copy.node[n]['dyn'])
+			G_copy.node[n]['params'] = str(G_copy.node[n]['params'])
+	if G_copy.graph['edge_dyn'] == True:
+		for n in G_copy.edges():
+			G_copy.edge[e[0]][e[1]]['dyn'] = str(G_copy.edge[e[0]][e[1]]['dyn'])
+			G_copy.edge[e[0]][e[1]]['params'] = str(G_copy.edge[e[0]][e[1]]['params'])
+	nx.write_gml(G_copy, path)
+
+

@@ -1,6 +1,8 @@
 #!/usr/bin/python
 """
-STUFF
+evolution_sa.py
+
+Example
 """
 
 # So that we can run the examples without netevo necessarily being 
@@ -8,110 +10,44 @@ STUFF
 import sys
 sys.path.append('../netevo-py')
 import netevo
-
 import math
 import networkx as nx
+import random
 import numpy as np
+import numpy.linalg as linalg
 import matplotlib.pyplot as plt
 
 
-def no_node_dyn (G, n, t, state):
-	return 0.0
+def rewire (G):
+	n_to_rewire = int(random.expovariate(4.0))
+	if n_to_rewire < 1:
+		n_to_rewire = 1
+	netevo.random_rewire (G, n_to_rewire)
 
 
-def no_edge_dyn (G, source, target, t, state):
-	return 0.0
+def eigenratio (G):
+	if nx.is_connected(G):
+		L = nx.laplacian_matrix(G)
+		eigenvalues, eigenvectors = linalg.eig(L)
+		idx = eigenvalues.argsort()   
+		eigenvalues = eigenvalues[idx]
+		return eigenvalues[-1]/eigenvalues[1]
+
+	return float('inf')
 
 
-def kuramoto_node_dyn (G, n, t, state):	
-	# Parameters
-	cur_params = G.node[n]['params']
-	natural_freq = cur_params[0]
-	coupling_strength = cur_params[1]
+# Create a random graph, but check that it is valid
+n = 100
+G = []
+while True:
+	G = nx.gnm_random_graph(n, 2*n)
+	if eigenratio(G) != float('inf'):
+		break
 	
-	# Calculate the new state value
-	sum_coupling = 0.0
-	for i in G[n]:
-		sum_coupling += math.sin(G.node[i]['state'] - state)
-	return math.fmod(state + natural_freq + (coupling_strength * sum_coupling), 6.283)
-	
+G.graph['node_dyn'] = False
+G.graph['edge_dyn'] = False
 
-def rossler_node_dyn (G, n, t, state):	
-	# Parameters
-	cur_params = G.node[n]['params']
-	sigma = cur_params[0]
-	rho = cur_params[1]
-	beta = cur_params[2]
+iteration, G_final = netevo.evolve_sa (G, eigenratio, rewire, initial_temp=100.0, min_temp=0.0000001)
 
-	# Calculate the new state value
-	c = np.zeros(np.size(state,0))
-	coupling = 0.1
-	for i in G[n]:
-		c += -coupling * (G.node[i]['state'] - state)
-	
-	v1 = (sigma    * (state[1] - state[0]))       - c[0]
-	v2 = (state[0] * (rho - state[2]) - state[1]) - c[1]
-	v3 = (state[0] * state[1] - beta * state[2])  - c[2]
-	
-	return np.array([v1, v2, v3])
-
-
-# Test the continuous dynamics
-
-G1 = nx.Graph()
-G1.graph['node_dyn'] = True
-G1.graph['edge_dyn'] = False
-
-G1.add_node(0)
-G1.node[0]['state'] = np.array([2.6, 0.8, 0.9])
-G1.node[0]['dyn'] = rossler_node_dyn
-G1.node[0]['params'] = [28.0, 10.0, 8.0/3.0]
-
-G1.add_node(1)
-G1.node[1]['state'] = np.array([1.2, 2.3, 0.2])
-G1.node[1]['dyn'] = rossler_node_dyn
-G1.node[1]['params'] = [28.0, 10.0, 8.0/3.0]
-
-G1.add_edge(0,1)
-
-netevo.simulate_rk45 (G1, 2.0, netevo.state_reporter)
-
-
-# Test the discrete dynamics
-
-fig = plt.figure()
-
-def visual_reporter (G, t):
-	"""
-	Standard simulation state reporter that outputs the current time and
-	node states for the system.
-	"""
-	plt.clf()
-	pos=nx.circular_layout(G)
-	n_sizes = []
-	for i in G.nodes():
-		n_sizes.append(100.0 * G.node[i]['state'])
-	nx.draw(G, pos, node_size=n_sizes)
-	fig.canvas.draw()
-
-G2 = nx.Graph()
-G2.graph['node_dyn'] = True
-G2.graph['edge_dyn'] = True
-
-n_nodes = 100
-
-G2.add_node(0)
-G2.node[0]['dyn'] = kuramoto_node_dyn
-G2.node[0]['params'] = [0.2, 0.1]
-
-for i in range(1, n_nodes):
-	G2.add_node(i)
-	G2.node[i]['dyn'] = kuramoto_node_dyn
-	G2.node[i]['params'] = [0.2, 0.1]
-	G2.add_edge(i-1,i)
-	G2.edge[i-1][i]['dyn'] = no_edge_dyn
-	
-netevo.rnd_uniform_node_states (G2, [(0.0, 0.5)])
-netevo.rnd_uniform_edge_states (G2, [(0.0, 0.1)])
-
-netevo.simulate_steps (G2, 100, visual_reporter)
+netevo.write_gml(G, 'out_start.gml')
+netevo.write_gml(G_final, 'out_end.gml')
