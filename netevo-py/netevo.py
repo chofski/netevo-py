@@ -272,6 +272,14 @@ def simulate_steps (G, t_max, reporter):
 		reporter(G, t)
 
 
+def no_state_reporter (G, t):
+	"""
+	Standard simulation state reporter that outputs the current time and
+	node states for the system.
+	"""
+	# Do nothing
+
+
 def state_reporter (G, t):
 	"""
 	Standard simulation state reporter that outputs the current time and
@@ -321,6 +329,16 @@ def rnd_uniform_edge_states (G, state_range):
 			for s in range(len(state_range)):
 				e_state.append(random.uniform(state_range[s][0], state_range[s][1]))
 			G.edge[e[0]][e[1]]['state'] = np.array(e_state)
+
+
+def set_all_node_dynamics (G, dyn_fn):
+	for n in G.nodes():
+		G.node[n]['dyn'] = dyn_fn
+
+
+def set_all_edge_dynamics (G, dyn_fn):
+	for e in G.edges():
+		G.edge[e[0]][e[1]]['dyn'] = dyn_fn
 
 
 ####################################################
@@ -471,11 +489,11 @@ def write_graphml (G, path):
 		for n in G_copy.nodes():
 			G_copy.node[n]['label'] = str(n)
 			G_copy.node[n]['dyn'] = str(G_copy.node[n]['dyn'])
-			G_copy.node[n]['params'] = str(G_copy.node[n]['params'])
+			#G_copy.node[n]['params'] = str(G_copy.node[n]['params'])
 	if G_copy.graph['edge_dyn'] == True:
 		for n in G_copy.edges():
 			G_copy.edge[e[0]][e[1]]['dyn'] = str(G_copy.edge[e[0]][e[1]]['dyn'])
-			G_copy.edge[e[0]][e[1]]['params'] = str(G_copy.edge[e[0]][e[1]]['params'])
+			#G_copy.edge[e[0]][e[1]]['params'] = str(G_copy.edge[e[0]][e[1]]['params'])
 	nx.write_graphml(G_copy, path)
 
 
@@ -491,11 +509,15 @@ def write_gml (G, path):
 		for n in G_copy.nodes():
 			G_copy.node[n]['label'] = str(n)
 			G_copy.node[n]['dyn'] = str(G_copy.node[n]['dyn'])
-			G_copy.node[n]['params'] = str(G_copy.node[n]['params'])
+			#G_copy.node[n]['params'] = str(G_copy.node[n]['params'])
 	if G_copy.graph['edge_dyn'] == True:
 		for n in G_copy.edges():
 			G_copy.edge[e[0]][e[1]]['dyn'] = str(G_copy.edge[e[0]][e[1]]['dyn'])
-			G_copy.edge[e[0]][e[1]]['params'] = str(G_copy.edge[e[0]][e[1]]['params'])
+			#G_copy.edge[e[0]][e[1]]['params'] = str(G_copy.edge[e[0]][e[1]]['params'])
 	nx.write_gml(G_copy, path)
 
 
+
+	
+	
+	

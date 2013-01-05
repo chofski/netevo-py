@@ -29,25 +29,19 @@ import numpy as np
 # DEFINE THE DYNAMICS
 #=========================================
 
-# Define a function for the continuous node dynamics
-def rossler_node_dyn (G, n, t, state):	
+# Define a function for the discrete node dynamics
+def kuramoto_node_dyn (G, n, t, state):
 	# Parameters
-	coupling = 0.5
-
+	natural_freq = 0.2
+	coupling_strength = 0.1
+	
 	# Calculate the new state value
-	c1 = 0.0
-	c3 = 0.0
-	
+	sum_coupling = 0.0
 	for i in G[n]:
-		c1 += coupling * (G.node[i]['state'][0] - state[0])
-		c3 += coupling * (G.node[i]['state'][2] - state[2])
-	
-	v1 = -state[1] - state[2] + c1   
-	v2 = state[0] + 0.165 * state[1]
-	v3 = 0.2 + (state[0] - 10.0) * state[2] + c3 
-	
-	# Return the new state value for the node
-	return np.array([v1, v2, v3])
+		sum_coupling += math.sin(G.node[i]['state'] - state)
+		
+	# Calcuate the new state of the node and return the value
+	return math.fmod(state + natural_freq + (coupling_strength * sum_coupling), 6.283)
 
 #=========================================
 # DEFINE MUTATION FUNCTION
@@ -68,10 +62,8 @@ def rewire (G):
 def order_parameter (G):
 	if nx.is_connected(G):
 		# Simulate from random initial conditions
-		netevo.rnd_uniform_node_states(G, [(0.0, 10.0), (0.0, 10.0), (0.0, 10.0)])
-		print 'here'
-		netevo.simulate_rk45(G, 50.0, netevo.no_state_reporter, h=0.1)
-		print 'and here'
+		netevo.rnd_uniform_node_states(G, [(0.0, 6.2)])
+		netevo.simulate_steps(G, 100, netevo.no_state_reporter)
 		# Calculate the order_parameter and return value
 		mu = 0.0
 		for i in G.nodes():
@@ -79,7 +71,7 @@ def order_parameter (G):
 				if i != j:
 					dist = np.linalg.norm(G.node[i]['state']-G.node[j]['state'])
 					# Heaviside function (allow for some numerical error: 0.01)
-					if dist - 0.01 >= 0.0:
+					if dist - 0.001 >= 0.0:
 						mu += 100.0
 		return mu * (1.0 / (G.number_of_nodes() * (G.number_of_nodes() - 1.0)));
 	# If the network is not connected it is not valid
@@ -90,7 +82,7 @@ def order_parameter (G):
 #=========================================
 
 # Create a random undirected graph and check valid (n=50, m=100)
-n = 25
+n = 50
 G = []
 while True:
 	G = nx.gnm_random_graph(n, 2*n)
@@ -101,7 +93,7 @@ while True:
 G.graph['node_dyn'] = True
 G.graph['edge_dyn'] = False
 
-netevo.set_all_node_dynamics(G, rossler_node_dyn)
+netevo.set_all_node_dynamics(G, kuramoto_node_dyn)
 
 #=========================================
 # EVOLVE THE NETWORK
