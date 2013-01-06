@@ -28,9 +28,8 @@ import networkx as nx
 # Define a function for the discrete node dynamics
 def kuramoto_node_dyn (G, n, t, state):
 	# Parameters
-	cur_params = G.node[n]['params']
-	natural_freq = cur_params[0]
-	coupling_strength = cur_params[1]
+	natural_freq = 0.1
+	coupling_strength = 0.2
 	
 	# Calculate the new state value
 	sum_coupling = 0.0
@@ -55,16 +54,15 @@ G2.graph['edge_dyn'] = False
 n_nodes = 4
 G2.add_node(0)
 G2.node[0]['dyn'] = kuramoto_node_dyn
-G2.node[0]['params'] = [0.2, 0.1]
 for i in range(1, n_nodes):
 	# Create the node
 	G2.add_node(i)
 	# Set the dynamics of the new node
 	G2.node[i]['dyn'] = kuramoto_node_dyn
-	# All nodes have identical dynamical parameters
-	G2.node[i]['params'] = [0.2, 0.1]
 	# Connect it to the previous node in the ring
-	G2.add_edge(i-1,i)
+	G2.add_edge(i-1, i)
+# Finish the ring
+G2.add_edge(i, 0)
 
 # Set the initial state to a random number in the range (0, 6.0)
 netevo.rnd_uniform_node_states (G2, [(0.0, 6.0)])

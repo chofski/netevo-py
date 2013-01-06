@@ -23,6 +23,7 @@ import math
 import random
 import networkx as nx
 import numpy    as np
+import scipy.integrate as integrate
 
 
 ####################################################
@@ -234,6 +235,81 @@ def simulate_rk45 (G, t_max, reporter, h=0.01, adaptive=False, tol=1e-5):
 		t += h
 
 
+def simulate_ode_fixed (G, ts, node_dim=1, edge_dim=1, rtol=1e-5, atol=1e-5, save_final_state=True):
+	"""
+	For systems where simulation does not lead to a change in the network
+	structure, it is possible to use the built-in SciPy ode solvers. Note
+	special dynamic functions must be present to ensure it works correctly.
+	Initial condition defined in the state of G and final state output to
+	G state.
+	"""
+	
+	# Generate the node and edge mappings for the state vector
+	nmap = {}
+	emap = {}
+	max_node_idx = 0
+	# Create the node mapping
+	if G.graph['node_dyn'] == True:
+		for idx, n in enumerate(G.nodes()):
+			nmap[n] = idx * node_dim
+			max_node_idx = node_dim * G.number_of_nodes()
+	else:
+		nmap = None
+		node_dim = 0
+	# Create the edge mapping
+	if G.graph['edge_dyn'] == True:
+		for idx, e in enumerate(G.edges()):
+			emap[e] = max_node_idx + (idx * edge_dim)
+	else:
+		emap = None
+		edge_dim = 0
+
+	# Generate the initial conditions (from G 'state')
+	f0 = np.zeros(max_node_idx + (G.number_of_edges() * edge_dim))
+	if nmap != None:
+		for n in G.nodes():
+			state = G.node[n]['state']
+			f0[nmap[n]:(nmap[n] + node_dim)] = state
+	if emap != None:
+		for e in G.edges():
+			state = G.edge[e[0]][e[1]]['state']
+			f0[emap[e]:(emap[e] + edge_dim)] = state
+	
+	# Simulate the system
+	res = integrate.odeint(simulate_ode_fixed_fn, f0, ts, args=(G, nmap, emap), rtol=rtol, atol=atol)
+	
+	# Save the final state to G
+	if save_final_state:
+		if nmap != None:
+			for n in G.nodes():
+				G.node[n]['state'] = res[:][-1][nmap[n]:(nmap[n] + node_dim)]
+		if emap != None:
+			for e in G.edges():
+				G.edge[e[0]][e[1]]['state'] = res[:][-1][emap[e]:(emap[e] + edge_dim)]
+	
+	# Return the full simulation array
+	return res, nmap, emap
+
+
+def simulate_ode_fixed_fn (y, t, G, nmap, emap):
+	"""
+	Function to calculate the derivitive of the graph at time t
+	"""
+	dy   = np.zeros(len(y))
+	#G    = args[0]
+	#nmap = args[1]
+	#emap = args[2]
+	if nmap != None:
+		# Call all the node update functions
+		for n in G.nodes():
+			G.node[n]['dyn'](G, n, t, y, dy, nmap, emap)
+	if emap != None:
+		# Call all the edge update functions
+		for e in G.edges():
+			G.edge[e[0]][e[1]]['dyn'](G, e, t, y, dy, nmap, emap)
+	return dy
+
+
 def simulate_steps (G, t_max, reporter):
 	"""
 	Simulates the dynamics of a network with discrete time dynamics.
@@ -392,7 +468,11 @@ def evo_sa_reporter (G, G_perf, iteration):
 	print 'Iteration: ', iteration, ', Performance = ', G_perf
 
 
-def evolve_sa (G, perf_fn, mut_fn, max_iter=100000, max_no_change=100, initial_temp=100000000000.0, min_temp=0.001, reporter=evo_sa_reporter):
+def boltzmann_accept_prob (d_perf, temperature):
+	return math.exp( d_perf / temperature );
+
+
+def evolve_sa (G, perf_fn, mut_fn, max_iter=100000, max_no_change=100, initial_temp=100000000000.0, min_temp=0.001, reporter=evo_sa_reporter, cooling_rate=0.99, accept_prob_fn=boltzmann_accept_prob):
 	"""
 	Evolves a network using a simulated annealing metaheuristic.
 	"""
@@ -412,7 +492,7 @@ def evolve_sa (G, perf_fn, mut_fn, max_iter=100000, max_no_change=100, initial_t
 		while no_change <= max_no_change and cur_temp > min_temp and iteration <= max_iter:
 			iteration += 1
 			# Run a trial
-			accept, new_G, G_perf = evolve_sa_trail(cur_temp, cur_perf, cur_G, mut_fn, perf_fn)
+			accept, new_G, G_perf = evolve_sa_trial(cur_temp, cur_perf, cur_G, mut_fn, perf_fn, accept_prob_fn)
 			if accept:
 				cur_G = new_G
 				cur_perf = G_perf
@@ -422,18 +502,14 @@ def evolve_sa (G, perf_fn, mut_fn, max_iter=100000, max_no_change=100, initial_t
 			# Observe the current system
 			reporter(cur_G, cur_perf, iteration)
 			# Reduce the temperature
-			cur_temp *= 0.99			
+			cur_temp *= cooling_rate			
 	else:
 		print 'WARNING: Initial temperature was <= 0.0'
 	
 	return iteration, cur_G
 
 
-def boltzmann_accept_prob (d_perf, temperature):
-	return math.exp( d_perf / temperature );
-
-
-def evolve_sa_trail (cur_temp, cur_perf, G, mut_fn, perf_fn):
+def evolve_sa_trial (cur_temp, cur_perf, G, mut_fn, perf_fn, accept_prob_fn):
 	# Make a copy of the system
 	G_copy = G.copy()
 	
@@ -455,7 +531,7 @@ def evolve_sa_trail (cur_temp, cur_perf, G, mut_fn, perf_fn):
 		# Ensure positive temperature
 		if cur_temp > 0.0:
 			# Randomly accept in relation to temperature
-			if random.random() <= boltzmann_accept_prob(d_perf, cur_temp):
+			if random.random() <= accept_prob_fn(d_perf, cur_temp):
 				return True, G_copy, new_perf
 		else:
 			print 'WARNING: Zero or negative temperature (evolve_sa_trail)'
@@ -469,7 +545,22 @@ def evolve_sa_trail (cur_temp, cur_perf, G, mut_fn, perf_fn):
 	Evolves a population of networks using a genetic algorithm metaheuristic. Runs 
 	each simulation step as a separate process to make use of multi-processor systems.
 	"""
-#	return True	
+	print 'TODO'
+
+
+def graph_random_mutate (G, node_add_prob=0.0, node_del_prob=0.0, edge_rewire_prob=0.0, edge_add_prob=0.0, edge_del_prob=0.0):
+	"""
+	Mutate in place - don't create a new object
+	"""
+	print 'TODO'
+
+
+def graph_crossover (G1, G2, points=1):
+	"""
+	Returns a new graph object (deepcopy) containing the crossed over graph
+	"""
+	# Pick n random numbers and sort - these are the crossover points
+	print 'TODO'
 
 
 ####################################################
@@ -489,11 +580,9 @@ def write_graphml (G, path):
 		for n in G_copy.nodes():
 			G_copy.node[n]['label'] = str(n)
 			G_copy.node[n]['dyn'] = str(G_copy.node[n]['dyn'])
-			#G_copy.node[n]['params'] = str(G_copy.node[n]['params'])
 	if G_copy.graph['edge_dyn'] == True:
 		for n in G_copy.edges():
 			G_copy.edge[e[0]][e[1]]['dyn'] = str(G_copy.edge[e[0]][e[1]]['dyn'])
-			#G_copy.edge[e[0]][e[1]]['params'] = str(G_copy.edge[e[0]][e[1]]['params'])
 	nx.write_graphml(G_copy, path)
 
 
@@ -509,11 +598,9 @@ def write_gml (G, path):
 		for n in G_copy.nodes():
 			G_copy.node[n]['label'] = str(n)
 			G_copy.node[n]['dyn'] = str(G_copy.node[n]['dyn'])
-			#G_copy.node[n]['params'] = str(G_copy.node[n]['params'])
 	if G_copy.graph['edge_dyn'] == True:
 		for n in G_copy.edges():
 			G_copy.edge[e[0]][e[1]]['dyn'] = str(G_copy.edge[e[0]][e[1]]['dyn'])
-			#G_copy.edge[e[0]][e[1]]['params'] = str(G_copy.edge[e[0]][e[1]]['params'])
 	nx.write_gml(G_copy, path)
 
 

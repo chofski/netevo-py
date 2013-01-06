@@ -21,8 +21,8 @@ import sys
 sys.path.append('../netevo-py')
 import netevo
 import math
-import networkx as nx
 import random
+import networkx as nx
 import numpy as np
 
 #=========================================
@@ -69,7 +69,7 @@ def order_parameter (G):
 		for i in G.nodes():
 			for j in G.nodes():
 				if i != j:
-					dist = np.linalg.norm(G.node[i]['state']-G.node[j]['state'])
+					dist = np.linalg.norm(G.node[i]['state'] - G.node[j]['state'])
 					# Heaviside function (allow for some numerical error: 0.01)
 					if dist - 0.001 >= 0.0:
 						mu += 100.0

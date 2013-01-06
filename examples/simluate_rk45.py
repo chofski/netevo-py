@@ -20,8 +20,6 @@ numpy array.
 import sys
 sys.path.append('../netevo-py')
 import netevo
-
-import math
 import networkx as nx
 import numpy as np
 
@@ -32,10 +30,9 @@ import numpy as np
 # Define a function for the continuous node dynamics
 def rossler_node_dyn (G, n, t, state):	
 	# Parameters
-	cur_params = G.node[n]['params']
-	sigma = cur_params[0]
-	rho = cur_params[1]
-	beta = cur_params[2]
+	sigma = 28.0
+	rho = 10.0
+	beta = 8.0/3.0
 
 	# Calculate the new state value
 	c = np.zeros(np.size(state,0))
@@ -65,11 +62,9 @@ G1.graph['edge_dyn'] = False
 G1.add_node(0)
 G1.node[0]['state'] = np.array([2.6, 0.8, 0.9])
 G1.node[0]['dyn'] = rossler_node_dyn
-G1.node[0]['params'] = [28.0, 10.0, 8.0/3.0]
 G1.add_node(1)
 G1.node[1]['state'] = np.array([1.2, 2.3, 0.2])
 G1.node[1]['dyn'] = rossler_node_dyn
-G1.node[1]['params'] = [28.0, 10.0, 8.0/3.0]
 
 # Connect the nodes with an edge
 G1.add_edge(0,1)

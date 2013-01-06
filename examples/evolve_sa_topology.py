@@ -20,11 +20,9 @@ with reduced eigneratios are known to show improved synchronisation.
 import sys
 sys.path.append('../netevo-py')
 import netevo
-import math
-import networkx as nx
 import random
+import networkx as nx
 import numpy as np
-import numpy.linalg as linalg
 
 #=========================================
 # DEFINE MUTATION FUNCTION
@@ -46,10 +44,10 @@ def eigenratio (G):
 	if nx.is_connected(G):
 		# Calculate the eigenrato (lambda_N/lambda_2)
 		L = nx.laplacian_matrix(G)
-		eigenvalues, eigenvectors = linalg.eig(L)
+		eigenvalues, eigenvectors = np.linalg.eig(L)
 		idx = eigenvalues.argsort()   
 		eigenvalues = eigenvalues[idx]
-		return eigenvalues[-1]/eigenvalues[1]
+		return eigenvalues[-1] / eigenvalues[1]
 	# If the network is not connected it is not valid
 	return float('inf')
 
