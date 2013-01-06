@@ -30,24 +30,19 @@ import numpy as np
 #=========================================
 
 # Define a function for the continuous node dynamics
-def rossler_node_dyn (G, n, t, state):	
+def rossler_node_dyn (G, n, t, y, dy, nmap, emap):	
 	# Parameters
-	coupling = 0.5
-
-	# Calculate the new state value
+	coupling = 0.3
+	# Calculate the coupling factor
 	c1 = 0.0
 	c3 = 0.0
-	
 	for i in G.neighbors(n):
-		c1 += coupling * (G.node[i]['state'][0] - state[0])
-		c3 += coupling * (G.node[i]['state'][2] - state[2])
-	
-	v1 = -state[1] - state[2] + c1   
-	v2 = state[0] + 0.165 * state[1]
-	v3 = 0.2 + (state[0] - 10.0) * state[2] + c3 
-	
-	# Return the new state value for the node
-	return np.array([v1, v2, v3])
+		c1 += coupling * (y[nmap[i]] - y[nmap[n]])
+		c3 += coupling * (y[nmap[i]+2] - y[nmap[n]+2])
+	# Calculate the derivative (include the coupling factors)
+	dy[nmap[n]]   = -y[nmap[n]+1] - y[nmap[n]+2] + c1   
+	dy[nmap[n]+1] = y[nmap[n]] + 0.165 * y[nmap[n]+1]
+	dy[nmap[n]+2] = 0.2 + (y[nmap[n]] - 10.0) * y[nmap[n]+2] + c3
 
 #=========================================
 # DEFINE MUTATION FUNCTION
@@ -69,15 +64,14 @@ def order_parameter (G):
 	if nx.is_connected(G):
 		# Simulate from random initial conditions
 		netevo.rnd_uniform_node_states(G, [(0.0, 10.0), (0.0, 10.0), (0.0, 10.0)])
-		print 'here'
-		netevo.simulate_rk45(G, 50.0, netevo.no_state_reporter, h=0.1)
-		print 'and here'
+		# Simulate the system
+		res, nmap, emap = netevo.simulate_ode_fixed(G, [0.0, 20.0], node_dim=3)
 		# Calculate the order_parameter and return value
 		mu = 0.0
 		for i in G.nodes():
 			for j in G.nodes():
 				if i != j:
-					dist = np.linalg.norm(G.node[i]['state']-G.node[j]['state'])
+					dist = np.linalg.norm(res[-1][nmap[i]:nmap[i]+2]-res[-1][nmap[j]:nmap[j]+2])
 					# Heaviside function (allow for some numerical error: 0.01)
 					if dist - 0.01 >= 0.0:
 						mu += 100.0
@@ -90,7 +84,7 @@ def order_parameter (G):
 #=========================================
 
 # Create a random undirected graph and check valid (n=50, m=100)
-n = 25
+n = 20
 G = []
 while True:
 	G = nx.gnm_random_graph(n, 2*n)
@@ -108,7 +102,7 @@ netevo.set_all_node_dynamics(G, rossler_node_dyn)
 #=========================================
 
 # Perform the evolution (using simulated dynamics as part of the performance measure)
-iteration, G_final = netevo.evolve_sa (G, order_parameter, rewire, initial_temp=100.0, min_temp=0.00001)
+iteration, G_final = netevo.evolve_sa (G, order_parameter, rewire, initial_temp=100.0, min_temp=0.0001)
 
 # Output GML files containing the initial and final toplogies (viewable in Cytoscape/yEd)
 netevo.write_to_file(G, 'evolution_sa_dyn_initial.gml')

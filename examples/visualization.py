@@ -1,6 +1,14 @@
 #!/usr/bin/python
 """
-STUFF
+visualization.py
+
+NetEvo example showing how the reporter can be used with the matplotlib
+library to generate online visualizations of the current state. The 
+network starts with each node having a random state, however, as simulation
+takes place the system becomes locally synchronized.
+
+For large networks we recommend that the visual reporter saves each frame 
+to a file which is then combined later to generate a movie.
 """
 
 # So that we can run the examples without netevo necessarily being 
@@ -8,110 +16,79 @@ STUFF
 import sys
 sys.path.append('../netevo-py')
 import netevo
-
 import math
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
-
-def no_node_dyn (G, n, t, state):
-	return 0.0
-
-
-def no_edge_dyn (G, source, target, t, state):
-	return 0.0
-
+#=========================================
+# DEFINE THE DYNAMICS
+#=========================================
 
 def kuramoto_node_dyn (G, n, t, state):	
 	# Parameters
-	cur_params = G.node[n]['params']
-	natural_freq = cur_params[0]
-	coupling_strength = cur_params[1]
-	
+	natural_freq = 0.3
+	coupling_strength = 0.4
 	# Calculate the new state value
 	sum_coupling = 0.0
-	for i in G[n]:
+	for i in G.neighbors(n):
 		sum_coupling += math.sin(G.node[i]['state'] - state)
 	return math.fmod(state + natural_freq + (coupling_strength * sum_coupling), 6.283)
+
+#=========================================
+# CREATE THE NETWORK
+#=========================================
 	
+# Create an undirected graph with only node dynamics
+G = nx.Graph()
+G.graph['node_dyn'] = True
+G.graph['edge_dyn'] = False
 
-def rossler_node_dyn (G, n, t, state):	
-	# Parameters
-	cur_params = G.node[n]['params']
-	sigma = cur_params[0]
-	rho = cur_params[1]
-	beta = cur_params[2]
+# Graph should have a ring topology
+n_nodes = 30
+G.add_node(0)
+for i in range(1, n_nodes):
+	G.add_node(i)
+	G.add_edge(i-1, i)
+G.add_edge(i, 0)
 
-	# Calculate the new state value
-	c = np.zeros(np.size(state,0))
-	coupling = 0.1
-	for i in G[n]:
-		c += -coupling * (G.node[i]['state'] - state)
-	
-	v1 = (sigma    * (state[1] - state[0]))       - c[0]
-	v2 = (state[0] * (rho - state[2]) - state[1]) - c[1]
-	v3 = (state[0] * state[1] - beta * state[2])  - c[2]
-	
-	return np.array([v1, v2, v3])
+# All nodes are Kuramoto oscillators (discrete-time)
+netevo.set_all_node_dynamics(G, kuramoto_node_dyn)
 
+# Set random initial conditions for each node
+netevo.rnd_uniform_node_states (G, [(0.0, 6.2)])
 
-# Test the continuous dynamics
+#=========================================
+# DEFINE THE VISUAL REPORTER
+#=========================================
 
-G1 = nx.Graph()
-G1.graph['node_dyn'] = True
-G1.graph['edge_dyn'] = False
+# Create the figure to display the visualization
+fig = plt.figure(figsize=(5,5))
 
-G1.add_node(0)
-G1.node[0]['state'] = np.array([2.6, 0.8, 0.9])
-G1.node[0]['dyn'] = rossler_node_dyn
-G1.node[0]['params'] = [28.0, 10.0, 8.0/3.0]
+# Node positions to use for the visualization
+pos=nx.circular_layout(G)
 
-G1.add_node(1)
-G1.node[1]['state'] = np.array([1.2, 2.3, 0.2])
-G1.node[1]['dyn'] = rossler_node_dyn
-G1.node[1]['params'] = [28.0, 10.0, 8.0/3.0]
-
-G1.add_edge(0,1)
-
-netevo.simulate_rk45 (G1, 2.0, netevo.state_reporter)
-
-
-# Test the discrete dynamics
-
-fig = plt.figure()
-
+# A visual reporter that will display the current state of the network
+# as it is being simulated
 def visual_reporter (G, t):
-	"""
-	Standard simulation state reporter that outputs the current time and
-	node states for the system.
-	"""
+	# Clear the figure
 	plt.clf()
-	pos=nx.circular_layout(G)
 	n_sizes = []
+	# Calculate the sizes of the nodes (their state)
 	for i in G.nodes():
-		n_sizes.append(100.0 * G.node[i]['state'])
+		new_size = 100.0 * G.node[i]['state']
+		if new_size < 1.0: new_size = 1
+		n_sizes.append(new_size)
+	# Draw the network and update the canvas
 	nx.draw(G, pos, node_size=n_sizes)
 	fig.canvas.draw()
 
-G2 = nx.Graph()
-G2.graph['node_dyn'] = True
-G2.graph['edge_dyn'] = True
-
-n_nodes = 100
-
-G2.add_node(0)
-G2.node[0]['dyn'] = kuramoto_node_dyn
-G2.node[0]['params'] = [0.2, 0.1]
-
-for i in range(1, n_nodes):
-	G2.add_node(i)
-	G2.node[i]['dyn'] = kuramoto_node_dyn
-	G2.node[i]['params'] = [0.2, 0.1]
-	G2.add_edge(i-1,i)
-	G2.edge[i-1][i]['dyn'] = no_edge_dyn
+#=========================================
+# SIMULATE THE DYNAMICS
+#=========================================
 	
-netevo.rnd_uniform_node_states (G2, [(0.0, 0.5)])
-netevo.rnd_uniform_edge_states (G2, [(0.0, 0.1)])
+# Simulate the dynamics (discrete-time) using the visual reporter
+netevo.simulate_steps (G, 200, visual_reporter)
 
-netevo.simulate_steps (G2, 100, visual_reporter)
+# Close the visualization
+plt.close()

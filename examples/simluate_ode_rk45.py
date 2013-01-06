@@ -37,7 +37,7 @@ def rossler_node_dyn (G, n, t, state):
 	# Calculate the new state value
 	c = np.zeros(np.size(state,0))
 	coupling = 0.1
-	for i in G[n]:
+	for i in G.neighbors(n):
 		c += -coupling * (G.node[i]['state'] - state)
 	
 	v1 = (sigma    * (state[1] - state[0]))       - c[0]

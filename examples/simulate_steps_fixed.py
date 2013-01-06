@@ -33,7 +33,7 @@ def kuramoto_node_dyn (G, n, t, y, dy, nmap, emap):
 	
 	# Calculate the new state value
 	sum_coupling = 0.0
-	for i in G[n]:
+	for i in G.neighbors(n):
 		sum_coupling += math.sin(y[nmap[i]] - y[nmap[n]])
 		
 	# Calcuate the new state of the node and return the value

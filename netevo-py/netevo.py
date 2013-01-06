@@ -611,7 +611,11 @@ def evolve_sa_trial (cur_temp, cur_perf, G, mut_fn, perf_fn, accept_prob_fn):
 	return False, G, cur_perf
 
 
-#def evolve_ga (G_pop, perf_fn, repoduce_fn, max_iter=10000, reporter=evo_ga_reporter, simulate_dyn=True):
+def evo_ga_reporter (G_pop, G_pop_perf, iteration):
+	print 'Iteration: ', iteration, ', Performance = '
+
+
+def evolve_ga (G_pop, perf_fn, repoduce_fn, max_iter=10000, reporter=evo_ga_reporter):
 	"""
 	Evolves a population of networks using a genetic algorithm metaheuristic. Runs 
 	each simulation step as a separate process to make use of multi-processor systems.
@@ -637,6 +641,15 @@ def graph_crossover (G1, G2, points=1):
 ####################################################
 # UTILITY FUNCTIONS
 ####################################################
+
+
+def find_differences (G1, G2):
+	"""
+	Will find the differences between two graphs and output a string in the
+	NetEvoX format (line per change). This is prodominantly of use for 
+	visualisation of evolving topologies over time.
+	"""
+	print 'TODO'
 
 
 def write_to_file (G, path, format='gml', node_keys=[], edge_keys=[]):

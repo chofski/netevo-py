@@ -36,7 +36,7 @@ def rossler_node_dyn (G, n, t, y, dy, nmap, emap):
 	# Calculate the coupling factor
 	c1 = 0.0
 	c3 = 0.0
-	for i in G[n]:
+	for i in G.neighbors(n):
 		c1 += coupling * (y[nmap[i]] - y[nmap[n]])
 		c3 += coupling * (y[nmap[i]+2] - y[nmap[n]+2])
 	# Calculate the derivative (include the coupling factors)
