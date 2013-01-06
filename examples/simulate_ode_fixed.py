@@ -39,7 +39,7 @@ def rossler_node_dyn (G, n, t, y, dy, nmap, emap):
 	for i in G[n]:
 		c1 += coupling * (y[nmap[i]] - y[nmap[n]])
 		c3 += coupling * (y[nmap[i]+2] - y[nmap[n]+2])
-	# Calculate the derivative
+	# Calculate the derivative (include the coupling factors)
 	dy[nmap[n]]   = -y[nmap[n]+1] - y[nmap[n]+2] + c1   
 	dy[nmap[n]+1] = y[nmap[n]] + 0.165 * y[nmap[n]+1]
 	dy[nmap[n]+2] = 0.2 + (y[nmap[n]] - 10.0) * y[nmap[n]+2] + c3 
@@ -69,9 +69,9 @@ netevo.set_all_node_dynamics(G, rossler_node_dyn)
 netevo.rnd_uniform_node_states(G, [(0.0, 5.0), (0.0, 5.0), (0.0, 5.0)])
 
 # Simulate the system
-res, nmap, emap = netevo.simulate_ode_fixed (G, [0.0, 10.0, 20.0], node_dim=3)
+res, nmap, emap = netevo.simulate_ode_fixed(G, [0.0, 10.0, 20.0], node_dim=3)
 
-# Print the results (show the virtual synchronisation)
+# Print the results
 print "Simulation Results:"
 print '================================='
 print "For t = 0:"
@@ -81,4 +81,3 @@ print '================================='
 print "For t = 20:"
 for n in G.nodes():
 	print "Node ", n, " = [", res[2][nmap[n]], ', ', res[2][nmap[n]+1], ', ', res[2][nmap[n]+2], ']' 
-

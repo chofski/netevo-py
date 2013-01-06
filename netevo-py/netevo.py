@@ -345,6 +345,79 @@ def simulate_steps (G, t_max, reporter):
 		reporter(G, t)
 
 
+def simulate_steps_fixed (G, ts, node_dim=1, edge_dim=1, save_final_state=True):
+	"""
+	Simulates the dynamics of a network with discrete time dynamics. This
+	is only valid for networks that maintain a fixed size and special 
+	dynamical functions must be used.
+	"""
+	# Check which types of dynamics exist
+	node_dyn = G.graph['node_dyn']
+	edge_dyn = G.graph['edge_dyn']
+	
+	# Variable to hold the results
+	res = []
+	
+	# Generate the node and edge mappings for the state vector
+	nmap = {}
+	emap = {}
+	max_node_idx = 0
+	# Create the node mapping
+	if G.graph['node_dyn'] == True:
+		for idx, n in enumerate(G.nodes()):
+			nmap[n] = idx * node_dim
+			max_node_idx = node_dim * G.number_of_nodes()
+	else:
+		nmap = None
+		node_dim = 0
+	# Create the edge mapping
+	if G.graph['edge_dyn'] == True:
+		for idx, e in enumerate(G.edges()):
+			emap[e] = max_node_idx + (idx * edge_dim)
+	else:
+		emap = None
+		edge_dim = 0
+	
+	# Generate the initial conditions (from G 'state')
+	y = np.zeros(max_node_idx + (G.number_of_edges() * edge_dim))
+	if nmap != None:
+		for n in G.nodes():
+			y[nmap[n]:(nmap[n] + node_dim)] = G.node[n]['state']
+	if emap != None:
+		for e in G.edges():
+			y[emap[e]:(emap[e] + edge_dim)] = G.edge[e[0]][e[1]]['state']
+	# Save the initial conditions
+	res.append(y)
+	
+	# Cycle through the steps required
+	for t in range(1, max(ts)):
+		# Create a new state vector
+		dy = np.zeros(len(y))
+		if nmap != None:
+			# Call all the node update functions
+			for n in G.nodes():
+				G.node[n]['dyn'](G, n, t, y, dy, nmap, emap)
+		if emap != None:
+			# Call all the edge update functions
+			for e in G.edges():
+				G.edge[e[0]][e[1]]['dyn'](G, e, t, y, dy, nmap, emap)
+		# Save the state if in the output list
+		if t in ts:
+			res.append(dy)
+		y = dy
+		
+	# Save the final state to G
+	if save_final_state:
+		if nmap != None:
+			for n in G.nodes():
+				G.node[n]['state'] = res[:][-1][nmap[n]:(nmap[n] + node_dim)]
+		if emap != None:
+			for e in G.edges():
+				G.edge[e[0]][e[1]]['state'] = res[:][-1][emap[e]:(emap[e] + edge_dim)]
+
+	return np.array(res), nmap, emap
+
+
 def no_state_reporter (G, t):
 	"""
 	Standard simulation state reporter that outputs the current time and
@@ -466,7 +539,7 @@ def evo_sa_reporter (G, G_perf, iteration):
 
 
 def boltzmann_accept_prob (d_perf, temperature):
-	return math.exp( d_perf / temperature );
+	return math.exp(d_perf / temperature);
 
 
 def evolve_sa (G, perf_fn, mut_fn, max_iter=100000, max_no_change=100, initial_temp=100000000000.0, min_temp=0.001, reporter=evo_sa_reporter, cooling_rate=0.99, accept_prob_fn=boltzmann_accept_prob):
