@@ -28,7 +28,7 @@ import numpy as np
 #=========================================
 
 # Define a function for the continuous node dynamics
-def rossler_node_dyn (G, n, t, state):	
+def lorenz_node_dyn (G, n, t, state):	
 	# Parameters
 	sigma = 28.0
 	rho = 10.0
