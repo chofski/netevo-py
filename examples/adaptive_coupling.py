@@ -50,16 +50,16 @@ def lorenz_node_dyn (G, n, t, state):
 	return np.array([v1, v2, v3])
 
 
-def adaptive_law_edge_dyn (G, source, target, t, state):
-
+def adaptive_law_edge_dyn (G, e, t, state):
+	source = e[0]
+	target = e[1]
+	
 	s1 = G.node[source]['state']
 	s2 = G.node[target]['state']
 	
-	d =  math.pow(s2[0] - s1[0], 2.0)
-	d += math.pow(s2[1] - s1[1], 2.0)
-	d += math.pow(s2[2] - s1[2], 2.0)
+	dist = np.linalg.norm(s1-s2)
 	
-	return 0.1 * math.sqrt(d)
+	return 0.1 * dist
 
 
 

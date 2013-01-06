@@ -48,8 +48,9 @@ def eigenratio (G):
 		idx = eigenvalues.argsort()   
 		eigenvalues = eigenvalues[idx]
 		return eigenvalues[-1] / eigenvalues[1]
-	# If the network is not connected it is not valid
-	return float('inf')
+	else:
+		# If the network is not connected it is not valid
+		return float('inf')
 
 #=========================================
 # CREATE THE NETWORK

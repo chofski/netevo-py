@@ -1,6 +1,6 @@
 # ============================================================================
 # NetEvo for Python
-# Copyright (C) 2012 Thomas E. Gorochowski <tom@chofski.co.uk>
+# Copyright (C) 2013 Thomas E. Gorochowski <tom@chofski.co.uk>
 # ---------------------------------------------------------------------------- 
 # NetEvo is a computing framework designed to allow researchers to investigate 
 # evolutionary aspects of dynamical complex networks. By providing tools to 
@@ -21,6 +21,7 @@
 
 import math
 import random
+import pickle
 import networkx as nx
 import numpy    as np
 import scipy.integrate as integrate
@@ -59,7 +60,7 @@ def simulate_euler (G, t_max, reporter, h=0.01):
 			for e in G.edges():
 				cur_edge = G.edge[e[0]][e[1]]
 				cur_state = cur_edge['state']
-				deriv = cur_edge['dyn'](G, e[0], e[1], t, cur_state)
+				deriv = cur_edge['dyn'](G, e, t, cur_state)
 				cur_edge['new_state'] = cur_state + (h * deriv)
 		
 		# Shift state
@@ -107,7 +108,7 @@ def simulate_midpoint (G, t_max, reporter, h=0.01):
 			for e in G.edges():
 				cur_edge = G.edge[e[0]][e[1]]
 				cur_state = cur_edge['state']
-				p1 = (h / 2.0) * cur_edge['dyn'](G, e[0], e[1], t, cur_state)
+				p1 = (h / 2.0) * cur_edge['dyn'](G, e, t, cur_state)
 				cur_edge['new_state'] = cur_state + (h * cur_edge['dyn'](G, n, t + (h / 2.0), cur_state + p1))
 		
 		# Shift state
@@ -209,13 +210,13 @@ def simulate_rk45 (G, t_max, reporter, h=0.01, adaptive=False, tol=1e-5):
 			for e in G.edges():
 				cur_edge = G.edge[e[0]][e[1]]
 				cur_state = cur_edge['state']
-				K1 = cur_edge['dyn'](G, e[0], e[1], t, cur_state)
-				K2 = cur_edge['dyn'](G, e[0], e[1], t + c2*h, cur_state+h*(a21*K1))
-				K3 = cur_edge['dyn'](G, e[0], e[1], t + c3*h, cur_state+h*(a31*K1+a32*K2))
-				K4 = cur_edge['dyn'](G, e[0], e[1], t + c4*h, cur_state+h*(a41*K1+a42*K2+a43*K3))
-				K5 = cur_edge['dyn'](G, e[0], e[1], t + c5*h, cur_state+h*(a51*K1+a52*K2+a53*K3+a54*K4))
-				K6 = cur_edge['dyn'](G, e[0], e[1], t + h,    cur_state+h*(a61*K1+a62*K2+a63*K3+a64*K4+a65*K5))
-				K7 = cur_edge['dyn'](G, e[0], e[1], t + h,    cur_state+h*(a71*K1+a72*K2+a73*K3+a74*K4+a75*K5+a76*K6))
+				K1 = cur_edge['dyn'](G, e, t, cur_state)
+				K2 = cur_edge['dyn'](G, e, t + c2*h, cur_state+h*(a21*K1))
+				K3 = cur_edge['dyn'](G, e, t + c3*h, cur_state+h*(a31*K1+a32*K2))
+				K4 = cur_edge['dyn'](G, e, t + c4*h, cur_state+h*(a41*K1+a42*K2+a43*K3))
+				K5 = cur_edge['dyn'](G, e, t + c5*h, cur_state+h*(a51*K1+a52*K2+a53*K3+a54*K4))
+				K6 = cur_edge['dyn'](G, e, t + h,    cur_state+h*(a61*K1+a62*K2+a63*K3+a64*K4+a65*K5))
+				K7 = cur_edge['dyn'](G, e, t + h,    cur_state+h*(a71*K1+a72*K2+a73*K3+a74*K4+a75*K5+a76*K6))
 				cur_edge['new_state'] = cur_state + (h * (b1*K1+b3*K3+b4*K4+b5*K5+b6*K6))
 		  
 		# Shift state
@@ -329,7 +330,7 @@ def simulate_steps (G, t_max, reporter):
 		if edge_dyn:
 			for e in G.edges():
 				cur_edge = G.edge[e[0]][e[1]]
-				cur_edge['new_state'] = cur_edge['dyn'](G, e[0], e[1], t, cur_node['state'])
+				cur_edge['new_state'] = cur_edge['dyn'](G, e, t, cur_node['state'])
 		
 		# Shift state
 		if node_dyn:
@@ -390,7 +391,7 @@ def simulate_steps_fixed (G, ts, node_dim=1, edge_dim=1, save_final_state=True):
 	res.append(y)
 	
 	# Cycle through the steps required
-	for t in range(1, max(ts)):
+	for t in range(1, max(ts)+1):
 		# Create a new state vector
 		dy = np.zeros(len(y))
 		if nmap != None:
