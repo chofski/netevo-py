@@ -111,5 +111,5 @@ netevo.set_all_node_dynamics(G, rossler_node_dyn)
 iteration, G_final = netevo.evolve_sa (G, order_parameter, rewire, initial_temp=100.0, min_temp=0.00001)
 
 # Output GML files containing the initial and final toplogies (viewable in Cytoscape/yEd)
-netevo.write_gml(G, 'evolution_sa_dyn_initial.gml')
-netevo.write_gml(G_final, 'evolution_sa_dyn_final.gml')
+netevo.write_to_file(G, 'evolution_sa_dyn_initial.gml')
+netevo.write_to_file(G_final, 'evolution_sa_dyn_final.gml', node_keys=['state', 'new_state'])

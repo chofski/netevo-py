@@ -295,10 +295,7 @@ def simulate_ode_fixed_fn (y, t, G, nmap, emap):
 	"""
 	Function to calculate the derivitive of the graph at time t
 	"""
-	dy   = np.zeros(len(y))
-	#G    = args[0]
-	#nmap = args[1]
-	#emap = args[2]
+	dy = np.zeros(len(y))
 	if nmap != None:
 		# Call all the node update functions
 		for n in G.nodes():
@@ -568,7 +565,7 @@ def graph_crossover (G1, G2, points=1):
 ####################################################
 
 
-def write_graphml (G, path):
+def write_to_file (G, path, format='gml', node_keys=[], edge_keys=[]):
 	"""
 	Writes a netevo graph to a suitably formatted GraphML file for use in 
 	external applications such as Cytoscape. This should be used instead of
@@ -576,35 +573,20 @@ def write_graphml (G, path):
 	based labels or lists (often used for parameters).
 	"""
 	G_copy = G.copy()
-	if G_copy.graph['node_dyn'] == True:
-		for n in G_copy.nodes():
-			G_copy.node[n]['label'] = str(n)
+	for n in G_copy.nodes():
+		G_copy.node[n]['label'] = str(n)
+		if G_copy.graph['node_dyn'] == True:
 			G_copy.node[n]['dyn'] = str(G_copy.node[n]['dyn'])
-	if G_copy.graph['edge_dyn'] == True:
-		for n in G_copy.edges():
+		for k in node_keys:
+			G_copy.node[n][k] = str(G_copy.node[n][k])
+	for n in G_copy.edges():
+		if G_copy.graph['edge_dyn'] == True:
 			G_copy.edge[e[0]][e[1]]['dyn'] = str(G_copy.edge[e[0]][e[1]]['dyn'])
-	nx.write_graphml(G_copy, path)
-
-
-def write_gml (G, path):
-	"""
-	Writes a netevo graph to a suitably formatted GML (Graphlet) file for use in 
-	external applications such as Cytoscape. This should be used instead of
-	the networkx functions as Cytoscape does not correctly handle non-string
-	based labels or lists (often used for parameters).
-	"""
-	G_copy = G.copy()
-	if G_copy.graph['node_dyn'] == True:
-		for n in G_copy.nodes():
-			G_copy.node[n]['label'] = str(n)
-			G_copy.node[n]['dyn'] = str(G_copy.node[n]['dyn'])
-	if G_copy.graph['edge_dyn'] == True:
-		for n in G_copy.edges():
-			G_copy.edge[e[0]][e[1]]['dyn'] = str(G_copy.edge[e[0]][e[1]]['dyn'])
-	nx.write_gml(G_copy, path)
-
-
-
-	
-	
-	
+		for k in edge_keys:
+			G_copy.edge[e[0]][e[1]][k] = str(G_copy.edge[e[0]][e[1]][k])
+	if format == 'gml':
+		nx.write_gml(G_copy, path)
+	elif format == 'graphml':
+		nx.write_graphml(G_copy, path)
+	else:
+		print 'WARNING: Unsupported file format (', format, ')'

@@ -48,7 +48,7 @@ def rossler_node_dyn (G, n, t, y, dy, nmap, emap):
 # CREATE THE NETWORK
 #=========================================
 
-# Create a random undirected graph and check valid (n=50, m=100)
+# Create a random undirected graph and check connected (n=50, m=100)
 n = 50
 G = []
 while True:
@@ -56,7 +56,7 @@ while True:
 	if nx.is_connected(G):
 		break
 
-# Only node dynamics are required and all should be chaotic Rossler oscillators
+# Only node dynamics are required - should all be chaotic Rossler oscillators
 G.graph['node_dyn'] = True
 G.graph['edge_dyn'] = False
 netevo.set_all_node_dynamics(G, rossler_node_dyn)
