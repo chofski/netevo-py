@@ -8,8 +8,8 @@ NetEvo for Python
     nodes and edges states, and includes optimization methods to evolve
     the dynamics or structure of a system towards some user specified goal.
     
-    This software is writen in Python and makes use of the networkx, numpy,
-    and SciPy packages.
+    NetEvo is writen in Python and makes use of the networkx, numpy, and SciPy
+    packages.
 """
 #    NetEvo for Python
 #    Copyright (C) 2010-2013 by
@@ -18,7 +18,6 @@ NetEvo for Python
 #    OSI Non-Profit Open Software License ("Non-Profit OSL") 3.0 license.
 
 import sys
-sys.path.append('..')
 if sys.version_info[:2] < (2, 6):
     m = "Python version 2.6 or later is required for NetEvo (%d.%d detected)."
     raise ImportError(m % sys.version_info[:2])
@@ -35,27 +34,38 @@ import networkx as nx
 import numpy    as np
 import scipy.integrate as integrate
 
+def simulate_euler(G, t_max, reporter=None, h=0.01):
+    """Simulate continuous-time network dynamics using a 1st order Euler 
+    method.
+    
+    This method is very simple and not advised for general use. It is included
+    for comparison and teaching purposes. The state of the simulaton is
+    stored as a node or edge attribute with the 'state' key.
+    
+    Parameters
+    ----------
+    G : NetworkX graph
+        It is assumed that this is configured for use with NetEvo, with 
+        defined dynamics for each node or edge (as appropriate).
 
-
-# SIMULATION OF NODE AND EDGE DYNAMICS
-
-def simulate_euler (G, t_max, reporter, h=0.01):
-    """
-    Simulates the dynamics of a network with continuous time dynamics using a 1st
-    order Euler method. Not advised for standard use due to lack of stability.
-    Included for comparison to other methods.
+    t_max :  float
+        Time to simulate for.
+    
+    reporter : function (optional default=None)
+        Reporting function called at each timestep, see: state_reporter(G, t).
+    
+    h : float (default=0.01)
+        Timestep
     """
     # Check which types of dynamics exist
     node_dyn = G.graph['node_dyn']
     edge_dyn = G.graph['edge_dyn']
-    
     # Inform the reporter of the initial state
-    reporter(G, 0.0)
-    
+    if reporter != None:
+        reporter(G, 0.0)
     # Cycle through all possible times
     t = 0.0
     while t <= t_max:
-        
         # Calculate new state for all nodes and edges
         if node_dyn:
             for n in G.nodes():
@@ -69,7 +79,6 @@ def simulate_euler (G, t_max, reporter, h=0.01):
                 cur_state = cur_edge['state']
                 deriv = cur_edge['dyn'](G, e, t, cur_state)
                 cur_edge['new_state'] = cur_state + (h * deriv)
-        
         # Shift state
         if node_dyn:
             for n in G.nodes():
@@ -79,45 +88,60 @@ def simulate_euler (G, t_max, reporter, h=0.01):
             for e in G.edges():
                 cur_edge = G.edge[e[0]][e[1]]
                 cur_edge['state'] = cur_edge['new_state']
-        
         # Update t (state is now at this point)
         t += h
-        
         # Inform the reporter of the updated state
-        reporter(G, t)
+        if reporter != None:
+            reporter(G, t)
 
+def simulate_midpoint(G, t_max, reporter=None, h=0.01):
+    """Simulate continuous-time network dynamics using a 2nd order modified 
+    Euler method (mid-point).
+    
+    This has better handling of errors than the 1st order Euler method, but is
+    also not advised for most systems. It is included for comparison and 
+    teaching purposes. The state of the simulaton is stored as a node or edge
+    attribute with the 'state' key.
+    
+    Parameters
+    ----------
+    G : NetworkX graph
+        It is assumed that this is configured for use with NetEvo, with 
+        defined dynamics for each node or edge (as appropriate).
 
-def simulate_midpoint (G, t_max, reporter, h=0.01):
-    """
-    Simulates the dynamics of a network with continuous time dynamics using a 2nd
-    order modified Euler method (mid-point). This has better handling of errors
-    than the Euler method, but is also not advised for most systems.
+    t_max :  float
+        Time to simulate for.
+    
+    reporter : function (optional default=None)
+        Reporting function called at each timestep, see: state_reporter(G, t).
+    
+    h : float (default=0.01)
+        Timestep
     """
     # Check which types of dynamics exist
     node_dyn = G.graph['node_dyn']
     edge_dyn = G.graph['edge_dyn']
-    
     # Inform the reporter of the initial state
-    reporter(G, 0.0)
-    
+    if reporter != None:
+        reporter(G, 0.0)
     # Cycle through all possible times
     t = 0.0
     while t <= t_max:
-        
         # Calculate new state for all nodes and edges
         if node_dyn:
             for n in G.nodes():
                 cur_node = G.node[n]
                 cur_state = cur_node['state']
                 p1 = (h / 2.0) * cur_node['dyn'](G, n, t, cur_state)
-                cur_node['new_state'] = cur_state + (h * cur_node['dyn'](G, n, t + (h / 2.0), cur_state + p1))
+                cur_node['new_state'] = cur_state + (h * cur_node['dyn'](G, n,
+                                               t + (h / 2.0), cur_state + p1))
         if edge_dyn:
             for e in G.edges():
                 cur_edge = G.edge[e[0]][e[1]]
                 cur_state = cur_edge['state']
                 p1 = (h / 2.0) * cur_edge['dyn'](G, e, t, cur_state)
-                cur_edge['new_state'] = cur_state + (h * cur_edge['dyn'](G, n, t + (h / 2.0), cur_state + p1))
-        
+                cur_edge['new_state'] = cur_state + (h * cur_edge['dyn'](G, n,
+                                               t + (h / 2.0), cur_state + p1))
         # Shift state
         if node_dyn:
             for n in G.nodes():
@@ -127,26 +151,39 @@ def simulate_midpoint (G, t_max, reporter, h=0.01):
             for e in G.edges():
                 cur_edge = G.edge[e[0]][e[1]]
                 cur_edge['state'] = cur_edge['new_state']
-        
         # Update t (state is now at this point)
         t += h
-        
         # Inform the reporter of the updated state
-        reporter(G, t)
+        if reporter != None:
+            reporter(G, t)
 
+def simulate_rk45(G, t_max, reporter=None, h=0.01):
+    """Simulate continuous-time network dynamics using a 4th order Runge Kutta 
+    method (Dormand-Prince).
+    
+    This is the recommended simulator for most cases. It is an explicit method
+    and so is not always well suited for stiff systems, however, in most cases
+    it is suitable with a sufficiently small timestep. The state of the 
+    simulaton is stored as a node or edge attribute with the 'state' key.
+    
+    Parameters
+    ----------
+    G : NetworkX graph
+        It is assumed that this is configured for use with NetEvo, with 
+        defined dynamics for each node or edge (as appropriate).
 
-def simulate_rk45 (G, t_max, reporter, h=0.01, adaptive=False, tol=1e-5):
-    """
-    Simulates the dynamics of a network with continuous time dynamics using a 4th
-    order Runge Kutta approach, specifically the Dormand-Prince method. This is
-    the recommended simulator for most cases. This is an explicit method and so is
-    not well suited for stiff systems, however, in most cases will work fine with
-    sufficiently small time-step.
+    t_max :  float
+        Time to simulate for.
+    
+    reporter : function (optional default=None)
+        Reporting function called at each timestep, see: state_reporter(G, t).
+    
+    h : float (default=0.01)
+        Timestep
     """
     # Check which types of dynamics exist
     node_dyn = G.graph['node_dyn']
     edge_dyn = G.graph['edge_dyn']
-    
     # Constants for the calculations
     a21  = (1.0/5.0)
     a31  = (3.0/40.0)
@@ -169,14 +206,12 @@ def simulate_rk45 (G, t_max, reporter, h=0.01, adaptive=False, tol=1e-5):
     a74  = (125.0/192.0)
     a75  = (-2187.0/6784.0)
     a76  = (11.0/84.0)
-
     c2   = (1.0 / 5.0)
     c3   = (3.0 / 10.0)
     c4   = (4.0 / 5.0)
     c5   = (8.0 / 9.0)
     c6   = (1.0)
     c7   = (1.0)
-
     b1   = (35.0/384.0)
     b2   = (0.0)
     b3   = (500.0/1113.0)
@@ -184,7 +219,6 @@ def simulate_rk45 (G, t_max, reporter, h=0.01, adaptive=False, tol=1e-5):
     b5   = (-2187.0/6784.0)
     b6   = (11.0/84.0)
     b7   = (0.0)
-
     b1p  = (5179.0/57600.0)
     b2p  = (0.0)
     b3p  = (7571.0/16695.0)
@@ -192,14 +226,12 @@ def simulate_rk45 (G, t_max, reporter, h=0.01, adaptive=False, tol=1e-5):
     b5p  = (-92097.0/339200.0)
     b6p  = (187.0/2100.0)
     b7p  = (1.0/40.0)
-    
     # Inform the reporter of the initial state
-    reporter(G, 0.0)
-    
+    if reporter != None:
+        reporter(G, 0.0)
     # Cycle through all possible times
     t = h
     while t <= t_max:
-
         # Calculate new state for all nodes and edges
         if node_dyn:
             for n in G.nodes():
@@ -207,25 +239,36 @@ def simulate_rk45 (G, t_max, reporter, h=0.01, adaptive=False, tol=1e-5):
                 cur_state = cur_node['state']
                 K1 = cur_node['dyn'](G, n, t, cur_state)
                 K2 = cur_node['dyn'](G, n, t + c2*h, cur_state+h*(a21*K1))
-                K3 = cur_node['dyn'](G, n, t + c3*h, cur_state+h*(a31*K1+a32*K2))
-                K4 = cur_node['dyn'](G, n, t + c4*h, cur_state+h*(a41*K1+a42*K2+a43*K3))
-                K5 = cur_node['dyn'](G, n, t + c5*h, cur_state+h*(a51*K1+a52*K2+a53*K3+a54*K4))
-                K6 = cur_node['dyn'](G, n, t + h,    cur_state+h*(a61*K1+a62*K2+a63*K3+a64*K4+a65*K5))
-                K7 = cur_node['dyn'](G, n, t + h,    cur_state+h*(a71*K1+a72*K2+a73*K3+a74*K4+a75*K5+a76*K6))
-                cur_node['new_state'] = cur_state + (h * (b1*K1+b3*K3+b4*K4+b5*K5+b6*K6))
+                K3 = cur_node['dyn'](G, n, t + c3*h, cur_state+h*(a31*K1+a32*
+                                                                  K2))
+                K4 = cur_node['dyn'](G, n, t + c4*h, cur_state+h*(a41*K1+a42*
+                                                                  K2+a43*K3))
+                K5 = cur_node['dyn'](G, n, t + c5*h, cur_state+h*(a51*K1+a52*
+                                                            K2+a53*K3+a54*K4))
+                K6 = cur_node['dyn'](G, n, t + h, cur_state+h*(a61*K1+a62*K2+
+                                                        a63*K3+a64*K4+a65*K5))
+                K7 = cur_node['dyn'](G, n, t + h, cur_state+h*(a71*K1+a72*K2+
+                                                 a73*K3+a74*K4+a75*K5+a76*K6))
+                cur_node['new_state'] = cur_state + (h * (b1*K1+b3*K3+b4*K4+
+                                                          b5*K5+b6*K6))
         if edge_dyn:
             for e in G.edges():
                 cur_edge = G.edge[e[0]][e[1]]
                 cur_state = cur_edge['state']
                 K1 = cur_edge['dyn'](G, e, t, cur_state)
                 K2 = cur_edge['dyn'](G, e, t + c2*h, cur_state+h*(a21*K1))
-                K3 = cur_edge['dyn'](G, e, t + c3*h, cur_state+h*(a31*K1+a32*K2))
-                K4 = cur_edge['dyn'](G, e, t + c4*h, cur_state+h*(a41*K1+a42*K2+a43*K3))
-                K5 = cur_edge['dyn'](G, e, t + c5*h, cur_state+h*(a51*K1+a52*K2+a53*K3+a54*K4))
-                K6 = cur_edge['dyn'](G, e, t + h,    cur_state+h*(a61*K1+a62*K2+a63*K3+a64*K4+a65*K5))
-                K7 = cur_edge['dyn'](G, e, t + h,    cur_state+h*(a71*K1+a72*K2+a73*K3+a74*K4+a75*K5+a76*K6))
-                cur_edge['new_state'] = cur_state + (h * (b1*K1+b3*K3+b4*K4+b5*K5+b6*K6))
-          
+                K3 = cur_edge['dyn'](G, e, t + c3*h, cur_state+h*(a31*K1+a32*
+                                                                  K2))
+                K4 = cur_edge['dyn'](G, e, t + c4*h, cur_state+h*(a41*K1+a42*
+                                                                  K2+a43*K3))
+                K5 = cur_edge['dyn'](G, e, t + c5*h, cur_state+h*(a51*K1+a52*
+                                                            K2+a53*K3+a54*K4))
+                K6 = cur_edge['dyn'](G, e, t + h, cur_state+h*(a61*K1+a62*K2+
+                                                        a63*K3+a64*K4+a65*K5))
+                K7 = cur_edge['dyn'](G, e, t + h, cur_state+h*(a71*K1+a72*K2+
+                                                 a73*K3+a74*K4+a75*K5+a76*K6))
+                cur_edge['new_state'] = cur_state + (h * (b1*K1+b3*K3+b4*K4+
+                                                                 b5*K5+b6*K6))
         # Shift state
         if node_dyn:
             for n in G.nodes():
@@ -235,23 +278,64 @@ def simulate_rk45 (G, t_max, reporter, h=0.01, adaptive=False, tol=1e-5):
             for e in G.edges():
                 cur_edge = G.edge[e[0]][e[1]]
                 cur_edge['state'] = cur_edge['new_state']
-        
         # Inform the reporter of the updated state
-        reporter(G, t)
-        
+        if reporter != None:
+            reporter(G, t)
         # Update t
         t += h
 
-
-def simulate_ode_fixed (G, ts, node_dim=1, edge_dim=1, rtol=1e-5, atol=1e-5, save_final_state=True):
-    """
-    For systems where simulation does not lead to a change in the network
-    structure, it is possible to use the built-in SciPy ode solvers. Note
-    special dynamic functions must be present to ensure it works correctly.
-    Initial condition defined in the state of G and final state output to
-    G state.
-    """
+def simulate_ode_fixed(G, ts, node_dim=1, edge_dim=1, rtol=1e-5, atol=1e-5, 
+                      save_final_state=True):
+    """Simulate continuous-time network dynamics using the SciPy odeint 
+    function (adaptive step integrator).
     
+    For systems where simulation does not lead to a change in the network
+    structure and where node and edge states maintain the same size through
+    time, it is possible to use the built-in SciPy ode solvers. Note special
+    dynamic functions for nodes and edges must be used. Initial condition is
+    defined in the 'state' attribute of nodes and edges in G.
+    
+    Parameters
+    ----------
+    G : NetworkX graph
+        It is assumed that this is configured for use with NetEvo, with 
+        defined dynamics for each node or edge (as appropriate).
+
+    ts :  list(float)
+        List of time points to output the simulation results.
+        
+    node_dim : int (default=1)
+        The dimension of node states.
+    
+    edge_dim : int (default=1)
+        The dimension of edge states.
+    
+    rtol : float (default=1e-5)
+        Relative error tolerance to be maintained (passed to SciPy).
+    
+    ratol : float (default=1e-5)
+        Absolute error tolerance to be maintained (passed to SciPy).
+    
+    save_final_state : boolean (default=True) 
+        Flag to choose if the final simulation state should be saved to the
+        networks 'state' attribute for the associated nodes and edges.
+    
+    Returns
+    -------
+    res: numpy.array
+        Array of the simulation results. A row exists for each of the given
+        timepoints in ts and columns represent the node and edge states. To
+        find the approriate starting index for a particular node or edge the
+        returned mappings must be used.
+    
+    nmap: dict
+        A dictionary keyed by the node. Returns the position in the results
+        array (res) of the first state value for that node.
+    
+    emap: dict
+        A dictionary keyed by the edge. Returns the position in the results
+        array (res) of the first state value for that edge.
+    """    
     # Generate the node and edge mappings for the state vector
     nmap = {}
     emap = {}
@@ -271,7 +355,6 @@ def simulate_ode_fixed (G, ts, node_dim=1, edge_dim=1, rtol=1e-5, atol=1e-5, sav
     else:
         emap = None
         edge_dim = 0
-
     # Generate the initial conditions (from G 'state')
     f0 = np.zeros(max_node_idx + (G.number_of_edges() * edge_dim))
     if nmap != None:
@@ -282,10 +365,9 @@ def simulate_ode_fixed (G, ts, node_dim=1, edge_dim=1, rtol=1e-5, atol=1e-5, sav
         for e in G.edges():
             state = G.edge[e[0]][e[1]]['state']
             f0[emap[e]:(emap[e] + edge_dim)] = state
-    
     # Simulate the system
-    res = integrate.odeint(simulate_ode_fixed_fn, f0, ts, args=(G, nmap, emap), rtol=rtol, atol=atol)
-    
+    res = integrate.odeint(simulate_ode_fixed_fn, f0, ts, args=(G, nmap, 
+                           emap), rtol=rtol, atol=atol)
     # Save the final state to G
     if save_final_state:
         if nmap != None:
@@ -293,16 +375,13 @@ def simulate_ode_fixed (G, ts, node_dim=1, edge_dim=1, rtol=1e-5, atol=1e-5, sav
                 G.node[n]['state'] = res[:][-1][nmap[n]:(nmap[n] + node_dim)]
         if emap != None:
             for e in G.edges():
-                G.edge[e[0]][e[1]]['state'] = res[:][-1][emap[e]:(emap[e] + edge_dim)]
-    
+                G.edge[e[0]][e[1]]['state'] = res[:][-1][emap[e]:(emap[e] + 
+                                                                  edge_dim)]
     # Return the full simulation array
     return res, nmap, emap
 
-
-def simulate_ode_fixed_fn (y, t, G, nmap, emap):
-    """
-    Function to calculate the derivitive of the graph at time t
-    """
+def simulate_ode_fixed_fn(y, t, G, nmap, emap):
+    # Internal function for calculating network derivitive
     dy = np.zeros(len(y))
     if nmap != None:
         # Call all the node update functions
@@ -314,30 +393,43 @@ def simulate_ode_fixed_fn (y, t, G, nmap, emap):
             G.edge[e[0]][e[1]]['dyn'](G, e, t, y, dy, nmap, emap)
     return dy
 
+def simulate_steps(G, t_max, reporter=None):
+    """Simulate discrete-time network dynamics.
+    
+    This is the recommended simulator for most cases. The state of the 
+    simulaton is stored as a node or edge attribute with the 'state' key.
+    
+    Parameters
+    ----------
+    G : NetworkX graph
+        It is assumed that this is configured for use with NetEvo, with 
+        defined dynamics for each node or edge (as appropriate).
 
-def simulate_steps (G, t_max, reporter):
-    """
-    Simulates the dynamics of a network with discrete time dynamics.
+    t_max :  float
+        Time to simulate for.
+    
+    reporter : function (optional default=None)
+        Reporting function called at each timestep, see: state_reporter(G, t).
     """
     # Check which types of dynamics exist
     node_dyn = G.graph['node_dyn']
     edge_dyn = G.graph['edge_dyn']
-    
     # Inform the reporter of the initial state
-    reporter(G, 0)
-    
+    if reporter != None:
+        reporter(G, 0)
     # Cycle through the steps required
     for t in range(1, t_max+1):
-        
         # Calculate new state for all nodes and edges
         if node_dyn:
             for n in G.nodes():
                 cur_node = G.node[n]
-                cur_node['new_state'] = cur_node['dyn'](G, n, t, cur_node['state'])
+                cur_node['new_state'] = cur_node['dyn'](G, n, t, 
+                                                        cur_node['state'])
         if edge_dyn:
             for e in G.edges():
                 cur_edge = G.edge[e[0]][e[1]]
-                cur_edge['new_state'] = cur_edge['dyn'](G, e, t, cur_node['state'])
+                cur_edge['new_state'] = cur_edge['dyn'](G, e, t, 
+                                                        cur_node['state'])
         
         # Shift state
         if node_dyn:
@@ -348,24 +440,60 @@ def simulate_steps (G, t_max, reporter):
             for e in G.edges():
                 cur_edge = G.edge[e[0]][e[1]]
                 cur_edge['state'] = cur_edge['new_state']
-        
         # Inform the reporter of the updated state
-        reporter(G, t)
+        if reporter != None:
+            reporter(G, t)
 
+def simulate_steps_fixed(G, ts, node_dim=1, edge_dim=1, 
+                         save_final_state=True):
+    """Simulate discrete-time network dynamics.
+    
+    For systems where simulation does not lead to a change in the network
+    structure and where node and edge states maintain the same size through
+    time. Note special dynamic functions for nodes and edges must be used. 
+    Initial condition is defined in the 'state' attribute of nodes and edges
+    in G.
+    
+    Parameters
+    ----------
+    G : NetworkX graph
+        It is assumed that this is configured for use with NetEvo, with 
+        defined dynamics for each node or edge (as appropriate).
 
-def simulate_steps_fixed (G, ts, node_dim=1, edge_dim=1, save_final_state=True):
-    """
-    Simulates the dynamics of a network with discrete time dynamics. This
-    is only valid for networks that maintain a fixed size and special 
-    dynamical functions must be used.
+    ts :  list(float)
+        List of time points to output the simulation results.
+        
+    node_dim : int (default=1)
+        The dimension of node states.
+    
+    edge_dim : int (default=1)
+        The dimension of edge states.
+    
+    save_final_state : boolean (default=True) 
+        Flag to choose if the final simulation state should be saved to the
+        networks 'state' attribute for the associated nodes and edges.
+    
+    Returns
+    -------
+    res: numpy.array
+        Array of the simulation results. A row exists for each of the given
+        timepoints in ts and columns represent the node and edge states. To
+        find the approriate starting index for a particular node or edge the
+        returned mappings must be used.
+    
+    nmap: dict
+        A dictionary keyed by the node. Returns the position in the results
+        array (res) of the first state value for that node.
+    
+    emap: dict
+        A dictionary keyed by the edge. Returns the position in the results
+        array (res) of the first state value for that edge.
     """
     # Check which types of dynamics exist
     node_dyn = G.graph['node_dyn']
     edge_dyn = G.graph['edge_dyn']
-    
     # Variable to hold the results
     res = []
-    
     # Generate the node and edge mappings for the state vector
     nmap = {}
     emap = {}
@@ -385,7 +513,6 @@ def simulate_steps_fixed (G, ts, node_dim=1, edge_dim=1, save_final_state=True):
     else:
         emap = None
         edge_dim = 0
-    
     # Generate the initial conditions (from G 'state')
     y = np.zeros(max_node_idx + (G.number_of_edges() * edge_dim))
     if nmap != None:
@@ -396,7 +523,6 @@ def simulate_steps_fixed (G, ts, node_dim=1, edge_dim=1, save_final_state=True):
             y[emap[e]:(emap[e] + edge_dim)] = G.edge[e[0]][e[1]]['state']
     # Save the initial conditions
     res.append(y)
-    
     # Cycle through the steps required
     for t in range(1, max(ts)+1):
         # Create a new state vector
@@ -413,7 +539,6 @@ def simulate_steps_fixed (G, ts, node_dim=1, edge_dim=1, save_final_state=True):
         if t in ts:
             res.append(dy)
         y = dy
-        
     # Save the final state to G
     if save_final_state:
         if nmap != None:
@@ -421,18 +546,9 @@ def simulate_steps_fixed (G, ts, node_dim=1, edge_dim=1, save_final_state=True):
                 G.node[n]['state'] = res[:][-1][nmap[n]:(nmap[n] + node_dim)]
         if emap != None:
             for e in G.edges():
-                G.edge[e[0]][e[1]]['state'] = res[:][-1][emap[e]:(emap[e] + edge_dim)]
-
+                G.edge[e[0]][e[1]]['state'] = res[:][-1][emap[e]:(emap[e] + 
+                                                                  edge_dim)]
     return np.array(res), nmap, emap
-
-
-def no_state_reporter (G, t):
-    """
-    Standard simulation state reporter that outputs the current time and
-    node states for the system.
-    """
-    # Do nothing
-
 
 def state_reporter (G, t):
     """
@@ -461,7 +577,8 @@ def rnd_uniform_node_states (G, state_range):
         for n in G.nodes():
             n_state = []
             for s in range(len(state_range)):
-                n_state.append(random.uniform(state_range[s][0], state_range[s][1]))
+                n_state.append(random.uniform(state_range[s][0], 
+                                              state_range[s][1]))
             G.node[n]['state'] = np.array(n_state)
 
 
@@ -481,7 +598,8 @@ def rnd_uniform_edge_states (G, state_range):
         for e in G.edges():
             e_state = []
             for s in range(len(state_range)):
-                e_state.append(random.uniform(state_range[s][0], state_range[s][1]))
+                e_state.append(random.uniform(state_range[s][0], 
+                                              state_range[s][1]))
             G.edge[e[0]][e[1]]['state'] = np.array(e_state)
 
 
@@ -530,7 +648,8 @@ def random_rewire (G, n):
         while trial < 1000:
             new_u = int(random.random()*len(G))
             new_v = int(random.random()*len(G))
-            if new_u != new_v and G.has_edge(nodes[new_u], nodes[new_v]) == False:
+            if new_u != new_v and \
+               G.has_edge(nodes[new_u], nodes[new_v]) == False:
                 break
             trial += 1  
         # Rewire if max trials not reached
@@ -550,7 +669,10 @@ def boltzmann_accept_prob (d_perf, temperature):
     return math.exp(d_perf / temperature);
 
 
-def evolve_sa (G, perf_fn, mut_fn, max_iter=100000, max_no_change=100, initial_temp=100000000000.0, min_temp=0.001, reporter=evo_sa_reporter, cooling_rate=0.99, accept_prob_fn=boltzmann_accept_prob):
+def evolve_sa (G, perf_fn, mut_fn, max_iter=100000, max_no_change=100, 
+               initial_temp=100000000000.0, min_temp=0.001, 
+               reporter=evo_sa_reporter, cooling_rate=0.99, 
+               accept_prob_fn=boltzmann_accept_prob):
     """
     Evolves a network using a simulated annealing metaheuristic.
     """
@@ -567,10 +689,12 @@ def evolve_sa (G, perf_fn, mut_fn, max_iter=100000, max_no_change=100, initial_t
 
     no_change = 0   
     if cur_temp > 0.0:
-        while no_change <= max_no_change and cur_temp > min_temp and iteration <= max_iter:
+        while no_change <= max_no_change and cur_temp > min_temp and \
+              iteration <= max_iter:
             iteration += 1
             # Run a trial
-            accept, new_G, G_perf = evolve_sa_trial(cur_temp, cur_perf, cur_G, mut_fn, perf_fn, accept_prob_fn)
+            accept, new_G, G_perf = evolve_sa_trial(cur_temp, cur_perf, 
+                                       cur_G, mut_fn, perf_fn, accept_prob_fn)
             if accept:
                 cur_G = new_G
                 cur_perf = G_perf
@@ -622,7 +746,8 @@ def evo_ga_reporter (G_pop, G_pop_perf, iteration):
     print 'Iteration: ', iteration, ', Performance = '
 
 
-def evolve_ga (G_pop, perf_fn, repoduce_fn, max_iter=10000, reporter=evo_ga_reporter):
+def evolve_ga(G_pop, perf_fn, repoduce_fn, max_iter=10000,
+              reporter=evo_ga_reporter):
     """
     Evolves a population of networks using a genetic algorithm metaheuristic. Runs 
     each simulation step as a separate process to make use of multi-processor systems.
@@ -630,7 +755,9 @@ def evolve_ga (G_pop, perf_fn, repoduce_fn, max_iter=10000, reporter=evo_ga_repo
     print 'TODO'
 
 
-def graph_random_mutate (G, node_add_prob=0.0, node_del_prob=0.0, edge_rewire_prob=0.0, edge_add_prob=0.0, edge_del_prob=0.0):
+def graph_random_mutate (G, node_add_prob=0.0, node_del_prob=0.0, 
+                         edge_rewire_prob=0.0, edge_add_prob=0.0, 
+                         edge_del_prob=0.0):
     """
     Mutate in place - don't create a new object
     """

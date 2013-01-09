@@ -1,8 +1,8 @@
 NetEvo for Python
 =================
 
-NetEvo is a computing framework designed to allow researchers to investigate evolutionary aspects of dynamical complex networks. By providing tools to easily integrate each of these factors in a coherent way, it is hoped a greater understanding can be gained of key attributes and features displayed by complex systems.
-
-This branch is a port to Python and uses networkx as the underlying datatype. This allows for an interactive and flexible system that is ideal for small to medium sized networks and teaching purposes. 
+NetEvo is a computing framework designed to allow researchers to investigate evolutionary aspects of dynamical complex networks. It provides functionality to easily simulate dynamical networks with both nodes and edges states, and includes optimization methods to evolve the dynamics or structure of a system towards some user specified goal.
+    
+NetEvo is writen in Python and makes use of the networkx, numpy, and SciPy packages.
 
 NetEvo is free software, you can redistribute it and/or modify it under the terms of the Non-Profit Open Software License ("Non-Profit OSL") 3.0. See the COPYING file for further details.
