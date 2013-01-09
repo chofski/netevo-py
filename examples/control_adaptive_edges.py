@@ -43,7 +43,7 @@ def lorenz_node_dyn (G, n, t, state):
     v3 = (state[0] * state[1] - (8.0/3.0) * state[2])  - c[2]
     return np.array([v1, v2, v3])
 
-# The adaptive edge law defined by De Lellis et al.
+# The adaptive edge law defined by De Lellis et al. (dimension = 1)
 def adaptive_law_edge_dyn (G, e, t, state):
     s1 = G.node[e[0]]['state']
     s2 = G.node[e[1]]['state']
