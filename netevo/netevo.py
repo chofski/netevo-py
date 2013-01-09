@@ -805,7 +805,7 @@ def evolve_sa (G, perf_fn, mut_fn, max_iter=100000, max_no_change=100,
     # Calculate the initial performance
     cur_perf = perf_fn(cur_G)
     # Observe the inital system
-    if reporter != None
+    if reporter != None:
         reporter(cur_G, cur_perf, iteration)
     no_change = 0   
     if cur_temp > 0.0:
@@ -822,7 +822,7 @@ def evolve_sa (G, perf_fn, mut_fn, max_iter=100000, max_no_change=100,
             else:
                 no_change += 1
             # Observe the current system
-            if reporter != None
+            if reporter != None:
                 reporter(cur_G, cur_perf, iteration)
             # Reduce the temperature
             cur_temp *= cooling_rate            
