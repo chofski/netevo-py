@@ -88,7 +88,7 @@ def visual_reporter (G, t):
 #=========================================
 	
 # Simulate the dynamics (discrete-time) using the visual reporter
-netevo.simulate_steps (G, 200, visual_reporter)
+netevo.simulate_steps(G, 200, visual_reporter)
 
 # Close the visualization
 plt.close()
