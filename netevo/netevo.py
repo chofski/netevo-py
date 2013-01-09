@@ -430,7 +430,6 @@ def simulate_steps(G, t_max, reporter=None):
                 cur_edge = G.edge[e[0]][e[1]]
                 cur_edge['new_state'] = cur_edge['dyn'](G, e, t, 
                                                         cur_node['state'])
-        
         # Shift state
         if node_dyn:
             for n in G.nodes():
