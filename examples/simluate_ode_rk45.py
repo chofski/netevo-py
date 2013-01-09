@@ -18,7 +18,7 @@ numpy array.
 # So that we can run the examples without netevo necessarily being 
 # in the system path.
 import sys
-sys.path.append('../netevo-py')
+sys.path.append('../netevo')
 import netevo
 import networkx as nx
 import numpy as np

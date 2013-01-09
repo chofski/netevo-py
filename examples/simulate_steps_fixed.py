@@ -16,7 +16,7 @@ simulation is printed to the screen.
 # So that we can run the examples without netevo necessarily being 
 # in the system path.
 import sys
-sys.path.append('../netevo-py')
+sys.path.append('../netevo')
 import netevo
 import math
 import networkx as nx

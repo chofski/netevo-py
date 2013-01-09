@@ -18,7 +18,7 @@ with reduced eigneratios are known to show improved synchronisation.
 # So that we can run the examples without netevo necessarily being 
 # in the system path.
 import sys
-sys.path.append('../netevo-py')
+sys.path.append('../netevo')
 import netevo
 import random
 import networkx as nx
@@ -73,7 +73,7 @@ G.graph['edge_dyn'] = False
 #=========================================
 
 # Perform the evolution
-iteration, G_final = netevo.evolve_sa (G, eigenratio, rewire, initial_temp=100.0, min_temp=0.0000001)
+iteration, G_final = netevo.evolve_sa (G, eigenratio, rewire, initial_temp=100.0, min_temp=0.0000001, reporter=evo_sa_reporter)
 
 # Output GML files containing the initial and final toplogies (viewable in Cytoscape/yEd)
 netevo.write_to_file(G, 'evolution_sa_initial.gml')
