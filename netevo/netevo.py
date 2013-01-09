@@ -29,9 +29,8 @@ __version__ = '1.0'
 
 import math
 import random
-import pickle
 import networkx as nx
-import numpy    as np
+import numpy as np
 import scipy.integrate as integrate
 
 def simulate_euler(G, t_max, reporter=None, h=0.01):
