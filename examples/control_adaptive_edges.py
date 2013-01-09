@@ -11,9 +11,8 @@ adaptive coupling". CHAOS 18, 037110 (2008).
  
 Starting from a random initial state for both nodes and edges. We simulate
 the dynamics to find a final topology achieving synchronisation of the entire
-network. Finally, we copy the resting edge states to the weight variable
-of edges in our system and export to file. This can then be viewed within
-tools such as Cytoscape - http://www.cytoscape.org
+network. The emergence of the topology is animated on screen and the final
+topology saved as an image file.
 """
 
 # So that we can run the examples without netevo necessarily being 
