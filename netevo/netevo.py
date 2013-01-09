@@ -550,23 +550,39 @@ def simulate_steps_fixed(G, ts, node_dim=1, edge_dim=1,
                                                                   edge_dim)]
     return np.array(res), nmap, emap
 
-def state_reporter (G, t):
-    """
-    Standard simulation state reporter that outputs the current time and
-    node states for the system.
+def state_reporter(G, t):
+    """Simple simulation state reporter that outputs the current time and
+    node states.
+    
+    Parameters
+    ----------
+    G : NetworkX graph
+        It is assumed that this is configured for use with NetEvo, with 
+        defined dynamics for each node or edge (as appropriate).
+
+    t :  float
+        Time point of the simulation.
     """
     output = 't = ' + str(t) + ', state = '
     for i in G.nodes():
         output += str(G.node[i]['state']) + ', '
     print output
 
+def rnd_uniform_node_states(G, state_range):
+    """Set all node states in a network to a uniformly random value.
+    
+    To allow for states of dimension > 1, state ranges should be provided for
+    each element in the state vector.
+    
+    Parameters
+    ----------
+    G : NetworkX graph
+        It is assumed that this is configured for use with NetEvo, with 
+        defined dynamics for each node or edge (as appropriate).
 
-def rnd_uniform_node_states (G, state_range):
-    """
-    Set the state of each node within the network to a random state in the
-    ranges specified in the state_range list. This has the form,
-       state_range = [(1min, 1max), (2min, 2max)...]
-    up to the number of states required per node.
+    state_range :  list(tuples)
+        List of tuples that hold the min and max value to randomly pick a 
+        value between e.g., state_range = [(1min, 1max), (2min, 2max)...].
     """
     if len(state_range) == 1:
         r1 = state_range[0][0]
@@ -581,13 +597,21 @@ def rnd_uniform_node_states (G, state_range):
                                               state_range[s][1]))
             G.node[n]['state'] = np.array(n_state)
 
+def rnd_uniform_edge_states(G, state_range):
+    """Set all edge states in a network to a uniformly random value.
+    
+    To allow for states of dimension > 1, state ranges should be provided for
+    each element in the state vector.
+    
+    Parameters
+    ----------
+    G : NetworkX graph
+        It is assumed that this is configured for use with NetEvo, with 
+        defined dynamics for each node or edge (as appropriate).
 
-def rnd_uniform_edge_states (G, state_range):
-    """
-    Set the state of each edge within the network to a random state in the
-    ranges specified in the state_range list. This has the form,
-       state_range = [(1min, 1max), (2min, 2max)...]
-    up to the number of states required per edge.
+    state_range :  list(tuples)
+        List of tuples that hold the min and max value to randomly pick a 
+        value between e.g., state_range = [(1min, 1max), (2min, 2max)...].
     """
     if len(state_range) == 1:
         r1 = state_range[0][0]
@@ -602,42 +626,65 @@ def rnd_uniform_edge_states (G, state_range):
                                               state_range[s][1]))
             G.edge[e[0]][e[1]]['state'] = np.array(e_state)
 
+def set_all_node_dynamics(G, dyn_fn):
+    """Set the dynamics for all nodes.
+    
+    Parameters
+    ----------
+    G : NetworkX graph
+        It is assumed that this is configured for use with NetEvo, with 
+        defined dynamics for each node or edge (as appropriate).
 
-def set_all_node_dynamics (G, dyn_fn):
+    dyn_fn :  function
+        Function to be used for every nodes dynamics.
+    """
     for n in G.nodes():
         G.node[n]['dyn'] = dyn_fn
 
+def set_all_edge_dynamics(G, dyn_fn):
+    """Set the dynamics for all edges.
+    
+    Parameters
+    ----------
+    G : NetworkX graph
+        It is assumed that this is configured for use with NetEvo, with 
+        defined dynamics for each node or edge (as appropriate).
 
-def set_all_edge_dynamics (G, dyn_fn):
+    dyn_fn :  function
+        Function to be used for every edges dynamics.
+    """
     for e in G.edges():
         G.edge[e[0]][e[1]]['dyn'] = dyn_fn
 
+def no_node_dyn(G, n, t, state):
+    """Null node dynamics (does nothing).
 
-####################################################
-# DYNAMICS LIBRARY
-####################################################
-
-
-def no_node_dyn (G, n, t, state):
-    """
-    No node dynamics to be used as a null form of node dynamics.
+    To be used when you want some nodes to have no dynamics.
     """
     return 0.0
 
+def no_edge_dyn(G, source, target, t, state):
+    """Null edge dynamics (does nothing).
 
-def no_edge_dyn (G, source, target, t, state):
-    """
-    No edge dynamics to be used as a null form of edge dynamics.
+    To be used when you want some edges to have no dynamics.
     """
     return 0.0
 
+def random_rewire(G, n, allow_self_loops=False):
+    """Randomly rewire edges.
+    
+    Parameters
+    ----------
+    G : NetworkX graph
+        It is assumed that this is configured for use with NetEvo, with 
+        defined dynamics for each node or edge (as appropriate).
 
-####################################################
-# EVOLUTION AND OPTIMIZATION
-####################################################
-
-
-def random_rewire (G, n):
+    n :  int
+        Number of edges to randomly rewire.
+        
+    allow_self_loops : boolean (default=False)
+        Flag as to whether self loops are allowed.
+    """
     nodes = G.nodes()
     edges = G.edges()
     for i in range(n):
@@ -648,9 +695,13 @@ def random_rewire (G, n):
         while trial < 1000:
             new_u = int(random.random()*len(G))
             new_v = int(random.random()*len(G))
-            if new_u != new_v and \
-               G.has_edge(nodes[new_u], nodes[new_v]) == False:
-                break
+            if allow_self_loops:
+                if G.has_edge(nodes[new_u], nodes[new_v]) == False:
+                    break
+            else:
+                if new_u != new_v and \
+                   G.has_edge(nodes[new_u], nodes[new_v]) == False:
+                    break
             trial += 1  
         # Rewire if max trials not reached
         if trial >= 1000:
@@ -660,33 +711,102 @@ def random_rewire (G, n):
             G.remove_edge(u, v)
             G.add_edge(nodes[new_u], nodes[new_v])
 
+def evo_sa_reporter(G, G_perf, iteration):
+    """Simple evolutionary state reporter for the simulated annealing evolver.
+    
+    Outputs the current iteration and performance value for the network.
+    
+    Parameters
+    ----------
+    G : NetworkX graph
+        It is assumed that this is configured for use with NetEvo, with 
+        defined dynamics for each node or edge (as appropriate).
 
-def evo_sa_reporter (G, G_perf, iteration):
+    G_perf :  float
+        Performance of the network.
+        
+    iteration : int
+        Iteration of the evolutionary process.
+    """
     print 'Iteration: ', iteration, ', Performance = ', G_perf
 
+def boltzmann_accept_prob(d_perf, temperature):
+    """Boltzmann accepting probability function for the simulated annealing
+    evolver.
+    
+    Parameters
+    ----------
+    d_perf : float
+        Change in performance value in last iteration.
 
-def boltzmann_accept_prob (d_perf, temperature):
+    temperature :  float
+        Current temperature of the simulated annealing process.
+    """
     return math.exp(d_perf / temperature);
-
 
 def evolve_sa (G, perf_fn, mut_fn, max_iter=100000, max_no_change=100, 
                initial_temp=100000000000.0, min_temp=0.001, 
-               reporter=evo_sa_reporter, cooling_rate=0.99, 
+               reporter=None, cooling_rate=0.99, 
                accept_prob_fn=boltzmann_accept_prob):
-    """
-    Evolves a network using a simulated annealing metaheuristic.
+    """Simulated annealing based evolver.
+    
+    Starting wit 
+    
+    Parameters
+    ----------
+    G : NetworkX graph
+        Starting network to evolve. It is assumed that this is configured for 
+        use with NetEvo, with defined dynamics for each node or edge
+        (as appropriate).
+        
+    perf_fn : function
+        Performance function to evalulate each candidate network. Lower 
+        performance values are better - evolution minimizes.
+        
+    mut_fn : function
+        Mutation function to generate new candidate networks from an existing
+        network.
+    
+    max_iter : int (default=100000)
+        Maximum number of iterations to perform.
+    
+    max_no_change : int (default=100)
+        Maximum number of consecutive iterations with no change before 
+        halting.
+    
+    initial_temp : float (default=100000000000.0)
+        Initial temperature of the simulated annealing process.
+    
+    min_temp : float (default=0.001)
+        Minimum temperature of the simulated annealing process before halting.
+    
+    reporter : function (optional default=None)
+        Optional reporter called after each evolutionary step.
+    
+    cooling_rate : float (default=0.99)
+        The fraction of the temperature used in following iterations.
+    
+    accept_prob_fn : function (default=boltzmann_accept_prob)
+        Function defining the accepting probability at a particular 
+        temperature.
+        
+    Returns
+    -------
+    iteration : int
+        Final iteration reached
+        
+    cur_G : NetworkX graph
+        Resultant network from the evolutionary process
     """
     # Copy the system and set initial process variables
     cur_G = G.copy()
     iteration = 0
     cur_temp = initial_temp
-    
     # Calculate the initial performance
     cur_perf = perf_fn(cur_G)
-        
     # Observe the inital system
-    reporter(cur_G, cur_perf, iteration)
-
+    if reporter != None
+        reporter(cur_G, cur_perf, iteration)
     no_change = 0   
     if cur_temp > 0.0:
         while no_change <= max_no_change and cur_temp > min_temp and \
@@ -702,29 +822,25 @@ def evolve_sa (G, perf_fn, mut_fn, max_iter=100000, max_no_change=100,
             else:
                 no_change += 1
             # Observe the current system
-            reporter(cur_G, cur_perf, iteration)
+            if reporter != None
+                reporter(cur_G, cur_perf, iteration)
             # Reduce the temperature
             cur_temp *= cooling_rate            
     else:
         print 'WARNING: Initial temperature was <= 0.0'
-    
     return iteration, cur_G
 
-
-def evolve_sa_trial (cur_temp, cur_perf, G, mut_fn, perf_fn, accept_prob_fn):
+def evolve_sa_trial(cur_temp, cur_perf, G, mut_fn, perf_fn, accept_prob_fn):
+    # Internal function that calculates a simulated annealing trial
     # Make a copy of the system
     G_copy = G.copy()
-    
     # Mutate the system
     mut_fn(G_copy)
-    
     # Estimate performance
     new_perf = perf_fn(G_copy)
-    
     if new_perf == float('inf'):
         # Do not accept change
         return False, G, cur_perf
-    
     d_perf =  cur_perf - new_perf
     if d_perf > 0.0:
         # Accept improvement
@@ -737,7 +853,6 @@ def evolve_sa_trial (cur_temp, cur_perf, G, mut_fn, perf_fn, accept_prob_fn):
                 return True, G_copy, new_perf
         else:
             print 'WARNING: Zero or negative temperature (evolve_sa_trail)'
-    
     # Mutation not accepted
     return False, G, cur_perf
 
@@ -749,8 +864,9 @@ def evo_ga_reporter (G_pop, G_pop_perf, iteration):
 def evolve_ga(G_pop, perf_fn, repoduce_fn, max_iter=10000,
               reporter=evo_ga_reporter):
     """
-    Evolves a population of networks using a genetic algorithm metaheuristic. Runs 
-    each simulation step as a separate process to make use of multi-processor systems.
+    Evolves a population of networks using a genetic algorithm metaheuristic. 
+    Runs each simulation step as a separate process to make use of 
+    multi-processor systems.
     """
     print 'TODO'
 
@@ -780,10 +896,30 @@ def find_differences (G1, G2):
     print 'TODO'
 
 def write_to_file (G, path, format='gml', node_keys=[], edge_keys=[]):
-    """Writes a netevo graph to a suitably formatted GraphML file for use in 
-    external applications such as Cytoscape. This should be used instead of
-    the networkx functions as Cytoscape does not correctly handle non-string
-    based labels or lists (often used for parameters).
+    """Writes a netevo graph to a suitably formatted file for use in 
+    external applications such as Cytoscape.
+    
+    This should be used instead of the networkx functions as Cytoscape does 
+    not correctly handle non-string based labels or lists (often used for 
+    parameters). Parameters to convert can be specified.
+    
+    Parameters
+    ----------
+    G : NetworkX graph
+        It is assumed that this is configured for use with NetEvo, with 
+        defined dynamics for each node or edge (as appropriate).
+        
+    path : string
+        Filename and path of the output file.
+        
+    format : string "gml"|"graphml" (default="gml")
+        Output format.
+        
+    node_keys : list(string)
+        List of node attribute keys to convert to strings.
+    
+    edge_keys : list(string)
+        List of edge attribute keys to convert to strings.
     """
     G_copy = G.copy()
     for n in G_copy.nodes():
