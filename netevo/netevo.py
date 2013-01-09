@@ -727,7 +727,7 @@ def evo_sa_reporter(G, G_perf, iteration):
     iteration : int
         Iteration of the evolutionary process.
     """
-    print 'Iteration: ', iteration, ', Performance = ', G_perf
+    print 'Iteration: ' + str(iteration) + ', Performance = ' + str(G_perf)
 
 def boltzmann_accept_prob(d_perf, temperature):
     """Boltzmann accepting probability function for the simulated annealing
@@ -855,10 +855,27 @@ def evolve_sa_trial(cur_temp, cur_perf, G, mut_fn, perf_fn, accept_prob_fn):
     # Mutation not accepted
     return False, G, cur_perf
 
-
 def evo_ga_reporter (G_pop, G_pop_perf, iteration):
-    print 'Iteration: ', iteration, ', Performance = '
+    """Simple evolutionary state reporter for the genetic algorithms evolver.
+    
+    Outputs the current iteration and performance values for the network
+    populations.
+    
+    Parameters
+    ----------
+    G_pop : list(NetworkX graph)
+        Current evolving network population.
 
+    G_pop_perf :  list(float)
+        List of performance values for each network in the population.
+        
+    iteration : int
+        Iteration of the evolutionary process.
+    """
+    out_str = 'Iteration: ' + str(iteration) + ', Performance = '
+    for perf in G_pop_perf:
+        out_str += str(perf) + ', ' 
+    print out_str
 
 def evolve_ga(G_pop, perf_fn, repoduce_fn, max_iter=10000,
               reporter=evo_ga_reporter):
@@ -869,7 +886,6 @@ def evolve_ga(G_pop, perf_fn, repoduce_fn, max_iter=10000,
     """
     print 'TODO'
 
-
 def graph_random_mutate (G, node_add_prob=0.0, node_del_prob=0.0, 
                          edge_rewire_prob=0.0, edge_add_prob=0.0, 
                          edge_del_prob=0.0):
@@ -878,14 +894,12 @@ def graph_random_mutate (G, node_add_prob=0.0, node_del_prob=0.0,
     """
     print 'TODO'
 
-
 def graph_crossover (G1, G2, points=1):
     """
     Returns a new graph object (deepcopy) containing the crossed over graph
     """
     # Pick n random numbers and sort - these are the crossover points
     print 'TODO'
-
 
 def find_differences (G1, G2):
     """Find the differences between two graphs and output a string in the
@@ -895,7 +909,7 @@ def find_differences (G1, G2):
     print 'TODO'
 
 def write_to_file (G, path, format='gml', node_keys=[], edge_keys=[]):
-    """Writes a netevo graph to a suitably formatted file for use in 
+    """Writes a NetEvo graph to a suitably formatted file for use in 
     external applications such as Cytoscape.
     
     This should be used instead of the networkx functions as Cytoscape does 

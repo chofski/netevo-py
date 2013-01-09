@@ -27,89 +27,81 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
+#=========================================
+# DEFINE THE DYNAMICS
+#=========================================
 
+# Definition of a chaotic Lorenz oscillator (dimension = 3)
+def lorenz_node_dyn (G, n, t, state):   
+    # Diffusively couple using the strength of the edge
+    c = np.zeros(np.size(state,0))
+    for i in G.edges_iter(n):
+        c += -G.edge[i[0]][i[1]]['state'] * (G.node[i[1]]['state'] - state)
+    # Calculate the derivative
+    v1 = (28.0    * (state[1] - state[0]))       - c[0]
+    v2 = (state[0] * (10.0 - state[2]) - state[1]) - c[1]
+    v3 = (state[0] * state[1] - (8.0/3.0) * state[2])  - c[2]
+    return np.array([v1, v2, v3])
 
-
-
-def lorenz_node_dyn (G, n, t, state):	
-	# Parameters
-	cur_params = G.node[n]['params']
-	sigma = cur_params[0]
-	rho = cur_params[1]
-	beta = cur_params[2]
-
-	# Diffusively couple using the strength of the edge
-	c = np.zeros(np.size(state,0))
-	for i in G.edges_iter(n):
-		c += -G.edge[i[0]][i[1]]['state'] * (G.node[i[1]]['state'] - state)
-	
-	v1 = (sigma    * (state[1] - state[0]))       - c[0]
-	v2 = (state[0] * (rho - state[2]) - state[1]) - c[1]
-	v3 = (state[0] * state[1] - beta * state[2])  - c[2]
-
-	return np.array([v1, v2, v3])
-
-
+# The adaptive edge law defined by De Lellis et al.
 def adaptive_law_edge_dyn (G, e, t, state):
-	source = e[0]
-	target = e[1]
-	
-	s1 = G.node[source]['state']
-	s2 = G.node[target]['state']
-	
-	dist = np.linalg.norm(s1-s2)
-	
-	return 0.1 * dist
+    s1 = G.node[e[0]]['state']
+    s2 = G.node[e[1]]['state']
+    dist = np.linalg.norm(s1-s2)
+    return 0.08 * dist
 
+#=========================================
+# CREATE THE NETWORK
+#=========================================
 
+# Create a fully connected graph
+G = nx.complete_graph(12)
 
+# Both node and edge dynamics are required
+G.graph['node_dyn'] = True
+G.graph['edge_dyn'] = True
 
-# Test the discrete dynamics
+# All nodes are chaotic Lorenz oscillators
+netevo.set_all_node_dynamics(G, lorenz_node_dyn)
+# All edges follow the adaptive rule
+netevo.set_all_edge_dynamics(G, adaptive_law_edge_dyn)
 
-fig = plt.figure()
+# Randomly assign node states
+netevo.rnd_uniform_node_states (G, [(0.1, 20.0), (0.1, 20.0), (0.1, 20.0)])
+# Edges all start with a very weak strength
+netevo.rnd_uniform_edge_states (G, [(0.00000001, 0.00000001)])
 
+#=========================================
+# DEFINE THE VISUAL REPORTER
+#=========================================
+
+# Create the figure to display the visualization
+fig = plt.figure(figsize=(6.5,6.5))
+# Node positions to use for the visualization
+pos=nx.circular_layout(G)
+# Function to generate the visualisation of the network
 def visual_reporter (G, t):
-	"""
-	Standard simulation state reporter that outputs the current time and
-	node states for the system.
-	"""
-	print t
-	plt.clf()
-	pos=nx.circular_layout(G)
-	n_sizes = []
-	for i in G.nodes():
-		n_sizes.append(150.0 * G.node[i]['state'][2])
-	nx.draw(G, pos, node_size=n_sizes)
-	nx.draw_networkx_edge_labels(G,pos, edge_labels='weight')
-	fig.canvas.draw()
+    plt.clf()
+    n_sizes = []
+    for i in G.nodes():
+        new_size = 100.0 * G.node[i]['state'][0]
+        if new_size < 1.0: new_size = 1
+        n_sizes.append(new_size)
+    e_sizes = []
+    for i in G.edges():
+        e_sizes.append(G.edge[i[0]][i[1]]['state'])
+    nx.draw(G, pos, node_size=n_sizes, node_color='#A0CBE2', 
+            edge_color=e_sizes, edge_vmin=0.0, edge_vmax=1.0, width=4,
+            edge_cmap=plt.cm.Blues, with_labels=False)
+    fig.canvas.draw()
 
+#=========================================
+# SIMULATE THE DYNAMICS
+#=========================================
+    
+# Simulate the network dynamics
+netevo.simulate_rk45 (G, 1.7, visual_reporter)
 
-
-G2 = nx.Graph()
-G2.graph['node_dyn'] = True
-G2.graph['edge_dyn'] = True
-
-
-n_nodes = 3
-
-G2.add_node(0)
-G2.node[0]['dyn'] = lorenz_node_dyn
-G2.node[0]['params'] = [28.0, 10.0, 8.0/3.0]
-
-for i in range(1, n_nodes):
-	G2.add_node(i)
-	G2.node[i]['dyn'] = lorenz_node_dyn
-	G2.node[i]['params'] = [28.0, 10.0, 8.0/3.0]
-	G2.add_edge(i-1,i)
-	G2.edge[i-1][i]['dyn'] = adaptive_law_edge_dyn
-	G2.edge[i-1][i]['state'] = 0.000001
-
-G2.add_edge(n_nodes-1,0)
-G2.edge[n_nodes-1][0]['dyn'] = adaptive_law_edge_dyn
-G2.edge[n_nodes-1][0]['state'] = 0.000001	
-	
-netevo.rnd_uniform_node_states (G2, [(0.1, 20.0), (0.1, 20.0), (0.1, 20.0)])
-
-
-netevo.simulate_rk45 (G2, 5.0, visual_reporter)
-#netevo.simulate_rk45 (G2, 5.0, netevo.state_reporter)
+# Save and then close the visualization
+plt.savefig('control_adaptive_edges-final_state.png')
+plt.close()
