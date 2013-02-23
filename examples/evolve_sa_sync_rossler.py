@@ -63,19 +63,23 @@ def rewire (G):
 def order_parameter (G):
 	if nx.is_connected(G):
 		# Simulate from random initial conditions
-		netevo.rnd_uniform_node_states(G, [(0.0, 10.0), (0.0, 10.0), (0.0, 10.0)])
+		netevo.rnd_uniform_node_states(G, [(0.0, 10.0), (0.0, 10.0), (0.0, 
+		                                                              10.0)])
 		# Simulate the system
-		res, nmap, emap = netevo.simulate_ode_fixed(G, [0.0, 20.0], node_dim=3)
+		res, nmap, emap = netevo.simulate_ode_fixed(G, [0.0, 20.0], 
+		                                            node_dim=3)
 		# Calculate the order_parameter and return value
 		mu = 0.0
 		for i in G.nodes():
 			for j in G.nodes():
 				if i != j:
-					dist = np.linalg.norm(res[-1][nmap[i]:nmap[i]+2]-res[-1][nmap[j]:nmap[j]+2])
-					# Heaviside function (allow for some numerical error: 0.01)
+					dist = np.linalg.norm(res[-1][nmap[i]:nmap[i]+2] -
+					                      res[-1][nmap[j]:nmap[j]+2])
+					# Heaviside function (allow for some numerical error:0.01)
 					if dist - 0.01 >= 0.0:
 						mu += 100.0
-		return mu * (1.0 / (G.number_of_nodes() * (G.number_of_nodes() - 1.0)));
+		return mu * (1.0 / (G.number_of_nodes() * (G.number_of_nodes() - 
+		                                           1.0)));
 	# If the network is not connected it is not valid
 	return float('inf')
 
@@ -102,8 +106,11 @@ netevo.set_all_node_dynamics(G, rossler_node_dyn)
 #=========================================
 
 # Perform the evolution (using simulated dynamics as part of the performance measure)
-iteration, G_final = netevo.evolve_sa (G, order_parameter, rewire, initial_temp=100.0, min_temp=0.0001, reporter=evo_sa_reporter)
+iteration, G_final = netevo.evolve_sa(G, order_parameter, rewire, 
+                                      initial_temp=100.0, min_temp=0.0001, 
+                                      reporter=evo_sa_reporter)
 
 # Output GML files containing the initial and final toplogies (viewable in Cytoscape/yEd)
 netevo.write_to_file(G, 'evolution_sa_dyn_initial.gml')
-netevo.write_to_file(G_final, 'evolution_sa_dyn_final.gml', node_keys=['state', 'new_state'])
+netevo.write_to_file(G_final, 'evolution_sa_dyn_final.gml', 
+                     node_keys=['state', 'new_state'])

@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 """
-visualization.py
-
-NetEvo example showing how the reporter can be used with the matplotlib
-library to generate online visualizations of the current state. The 
-network starts with each node having a random state, however, as simulation
-takes place the system becomes locally synchronized.
+Shows how the reporter can be used with the matplotlib library to generate 
+online visualizations of the current state. The network starts with each 
+node having a random state, however, as simulation takes place the system 
+becomes locally synchronized.
 
 For large networks we recommend that the visual reporter saves each frame 
 to a file which is then combined later to generate a movie.
@@ -33,7 +31,8 @@ def kuramoto_node_dyn (G, n, t, state):
 	sum_coupling = 0.0
 	for i in G.neighbors(n):
 		sum_coupling += math.sin(G.node[i]['state'] - state)
-	return math.fmod(state + natural_freq + (coupling_strength * sum_coupling), 6.283)
+	return math.fmod(state + natural_freq + (coupling_strength * 
+	                                         sum_coupling), 6.283)
 
 #=========================================
 # CREATE THE NETWORK
@@ -63,7 +62,7 @@ netevo.rnd_uniform_node_states (G, [(0.0, 6.2)])
 #=========================================
 
 # Create the figure to display the visualization
-fig = plt.figure(figsize=(5,5))
+fig = plt.figure(figsize=(6,6))
 
 # Node positions to use for the visualization
 pos=nx.circular_layout(G)
@@ -80,7 +79,8 @@ def visual_reporter (G, t):
 		if new_size < 1.0: new_size = 1
 		n_sizes.append(new_size)
 	# Draw the network and update the canvas
-	nx.draw(G, pos, node_size=n_sizes)
+	nx.draw(G, pos, node_size=n_sizes, node_color='#A0CBE2', width=4, 
+	        with_labels=False)
 	fig.canvas.draw()
 
 #=========================================

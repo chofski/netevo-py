@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 """
-simulate_ode_fixed.py
-
 NetEvo example that introduces the concept of evolution using a simulated annealing
 metaheuristic. The user must provide functions that quantify a performance
 measure (smaller is better - like a cost) and a mutation that should be 
@@ -76,8 +74,10 @@ print "Simulation Results:"
 print '================================='
 print "For t = 0:"
 for n in G.nodes():
-	print "Node ", n, " = [", res[0][nmap[n]], ', ', res[0][nmap[n]+1], ', ', res[0][nmap[n]+2], ']' 
+	print "Node ", n, " = [", res[0][nmap[n]], ', ', res[0][nmap[n]+1], ', ' \
+	      , res[0][nmap[n]+2], ']' 
 print '================================='
 print "For t = 20:"
 for n in G.nodes():
-	print "Node ", n, " = [", res[2][nmap[n]], ', ', res[2][nmap[n]+1], ', ', res[2][nmap[n]+2], ']' 
+	print "Node ", n, " = [", res[2][nmap[n]], ', ', res[2][nmap[n]+1], ', ' \
+	      , res[2][nmap[n]+2], ']' 

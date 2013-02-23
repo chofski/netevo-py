@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 """
-evolution_sa_dynamics.py
-
-NetEvo example that introduces the concept of evolution using a simulated annealing
+This example introduces the concept of evolution using the simulated annealing
 metaheuristic. The user must provide functions that quantify a performance
 measure (smaller is better - like a cost) and a mutation that should be 
 performed to search for new network topologies. The performance function used
@@ -73,8 +71,10 @@ G.graph['edge_dyn'] = False
 #=========================================
 
 # Perform the evolution
-iteration, G_final = netevo.evolve_sa (G, eigenratio, rewire, initial_temp=100.0, min_temp=0.0000001, reporter=evo_sa_reporter)
+iteration, G_final = netevo.evolve_sa(G, eigenratio, rewire, 
+                                      initial_temp=100.0, min_temp=0.0000001, 
+                                      reporter=evo_sa_reporter)
 
-# Output GML files containing the initial and final toplogies (viewable in Cytoscape/yEd)
+# Output GML files containing the initial and final toplogies
 netevo.write_to_file(G, 'evolution_sa_initial.gml')
 netevo.write_to_file(G_final, 'evolution_sa_final.gml')

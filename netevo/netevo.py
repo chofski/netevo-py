@@ -876,7 +876,7 @@ def evo_ga_reporter (G_pop, G_pop_perf, iteration):
         out_str += str(perf) + ', ' 
     print out_str
 
-def evolve_ga(G_pop, perf_fn, repoduce_fn, max_iter=10000,
+def evolve_ga(G_pop, perf_fn, repoduce_fn, max_iter=1000,
               reporter=evo_ga_reporter):
     """
     Evolves a population of networks using a genetic algorithm metaheuristic. 
@@ -891,6 +891,7 @@ def graph_random_mutate (G, node_add_prob=0.0, node_del_prob=0.0,
     """
     Mutate in place - don't create a new object
     """
+    
     print 'TODO'
 
 def graph_crossover (G1, G2, points=1):
@@ -898,13 +899,6 @@ def graph_crossover (G1, G2, points=1):
     Returns a new graph object (deepcopy) containing the crossed over graph
     """
     # Pick n random numbers and sort - these are the crossover points
-    print 'TODO'
-
-def find_differences (G1, G2):
-    """Find the differences between two graphs and output a string in the
-    NetEvoX format (line per change). This is prodominantly of use for 
-    visualisation of evolving topologies over time.
-    """
     print 'TODO'
 
 def write_to_file (G, path, format='gml', node_keys=[], edge_keys=[]):

@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 """
-discrete_dynamics.py
-
 NetEvo example showing how a discrete node dynamics can be simulated. A ring
 network of identical kuramoto nodes is created and each node given a random
 initial state. Nodes are diffusely coupled along the edges and simulation of
@@ -37,7 +35,8 @@ def kuramoto_node_dyn (G, n, t, state):
 		sum_coupling += math.sin(G.node[i]['state'] - state)
 		
 	# Calcuate the new state of the node and return the value
-	return math.fmod(state + natural_freq + (coupling_strength * sum_coupling), 6.283)
+	return math.fmod(state + natural_freq + (coupling_strength * 
+	                                         sum_coupling), 6.283)
 
 #=========================================
 # CREATE THE DYNAMICAL NETWORK

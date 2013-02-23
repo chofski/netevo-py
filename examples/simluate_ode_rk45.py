@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 """
-continuous_dynamics.py
-
 NetEvo example showing how a continuous node dynamics can be simulated. A pair
 of identical nodes exhibiting Rossler dynamics is created and each node given 
 a random initial state. Nodes are diffusely coupled (on all states) and 

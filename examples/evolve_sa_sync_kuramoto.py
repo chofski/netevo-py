@@ -41,7 +41,8 @@ def kuramoto_node_dyn (G, n, t, state):
 		sum_coupling += math.sin(G.node[i]['state'] - state)
 		
 	# Calcuate the new state of the node and return the value
-	return math.fmod(state + natural_freq + (coupling_strength * sum_coupling), 6.283)
+	return math.fmod(state + natural_freq + (coupling_strength * 
+	                                         sum_coupling), 6.283)
 
 #=========================================
 # DEFINE MUTATION FUNCTION
@@ -58,7 +59,7 @@ def rewire (G):
 # DEFINE PERFORMANCE MEASURE
 #=========================================
 
-# Define a function for the performance measure (order_parameter: smaller = better)
+# Define a function for the performance measure (smaller = better)
 def order_parameter (G):
 	if nx.is_connected(G):
 		# Simulate from random initial conditions
@@ -69,11 +70,13 @@ def order_parameter (G):
 		for i in G.nodes():
 			for j in G.nodes():
 				if i != j:
-					dist = np.linalg.norm(G.node[i]['state'] - G.node[j]['state'])
-					# Heaviside function (allow for some numerical error: 0.01)
+					dist = np.linalg.norm(G.node[i]['state'] - 
+					                      G.node[j]['state'])
+					# Heaviside function (allow for some numerical error:0.01)
 					if dist - 0.001 >= 0.0:
 						mu += 100.0
-		return mu * (1.0 / (G.number_of_nodes() * (G.number_of_nodes() - 1.0)));
+		return mu * (1.0 / (G.number_of_nodes() * (G.number_of_nodes() - 
+		                                           1.0)));
 	# If the network is not connected it is not valid
 	return float('inf')
 
@@ -99,9 +102,12 @@ netevo.set_all_node_dynamics(G, kuramoto_node_dyn)
 # EVOLVE THE NETWORK
 #=========================================
 
-# Perform the evolution (using simulated dynamics as part of the performance measure)
-iteration, G_final = netevo.evolve_sa(G, order_parameter, rewire, initial_temp=100.0, min_temp=0.00001, reporter=evo_sa_reporter)
+# Perform the evolution (using simulated dynamics as part of the 
+# performance measure)
+iteration, G_final = netevo.evolve_sa(G, order_parameter, rewire, 
+                                      initial_temp=100.0, min_temp=0.00001, 
+                                      reporter=evo_sa_reporter)
 
-# Output GML files containing the initial and final toplogies (viewable in Cytoscape/yEd)
+# Output GML files containing the initial and final toplogies
 netevo.write_to_file(G, 'evolution_sa_dyn_initial.gml')
 netevo.write_to_file(G_final, 'evolution_sa_dyn_final.gml')

@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 """
-adaptive_coupling.py
-
 In this example we simulate the dynamics of a network with ODE descriptions
 for both node and edge states. Nodes are Lorenz chaotic oscillators and edges
 use an adaptive law to govern their strength. This is taken from the paper:
@@ -37,8 +35,8 @@ def lorenz_node_dyn (G, n, t, state):
     for i in G.edges_iter(n):
         c += -G.edge[i[0]][i[1]]['state'] * (G.node[i[1]]['state'] - state)
     # Calculate the derivative
-    v1 = (28.0    * (state[1] - state[0]))       - c[0]
-    v2 = (state[0] * (10.0 - state[2]) - state[1]) - c[1]
+    v1 = (28.0     * (state[1] - state[0]))            - c[0]
+    v2 = (state[0] * (10.0 - state[2]) - state[1])     - c[1]
     v3 = (state[0] * state[1] - (8.0/3.0) * state[2])  - c[2]
     return np.array([v1, v2, v3])
 
@@ -46,7 +44,7 @@ def lorenz_node_dyn (G, n, t, state):
 def adaptive_law_edge_dyn (G, e, t, state):
     s1 = G.node[e[0]]['state']
     s2 = G.node[e[1]]['state']
-    dist = np.linalg.norm(s1-s2)
+    dist = np.linalg.norm(s1 - s2)
     return 0.08 * dist
 
 #=========================================
@@ -66,9 +64,9 @@ netevo.set_all_node_dynamics(G, lorenz_node_dyn)
 netevo.set_all_edge_dynamics(G, adaptive_law_edge_dyn)
 
 # Randomly assign node states
-netevo.rnd_uniform_node_states (G, [(0.1, 20.0), (0.1, 20.0), (0.1, 20.0)])
+netevo.rnd_uniform_node_states(G, [(0.1, 20.0), (0.1, 20.0), (0.1, 20.0)])
 # Edges all start with a very weak strength
-netevo.rnd_uniform_edge_states (G, [(0.00000001, 0.00000001)])
+netevo.rnd_uniform_edge_states(G, [(0.00000001, 0.00000001)])
 
 #=========================================
 # DEFINE THE VISUAL REPORTER
@@ -77,7 +75,7 @@ netevo.rnd_uniform_edge_states (G, [(0.00000001, 0.00000001)])
 # Create the figure to display the visualization
 fig = plt.figure(figsize=(6.5,6.5))
 # Node positions to use for the visualization
-pos=nx.circular_layout(G)
+pos = nx.circular_layout(G)
 # Function to generate the visualisation of the network
 def visual_reporter (G, t):
     plt.clf()
@@ -99,8 +97,8 @@ def visual_reporter (G, t):
 #=========================================
     
 # Simulate the network dynamics
-netevo.simulate_rk45 (G, 1.7, visual_reporter)
+netevo.simulate_rk45(G, 1.7, visual_reporter)
 
 # Save and then close the visualization
-plt.savefig('control_adaptive_edges-final_state.png')
+plt.savefig('control_sync_adaptive_edges-final_state.png')
 plt.close()
