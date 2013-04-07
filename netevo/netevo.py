@@ -33,7 +33,7 @@ import networkx as nx
 import numpy as np
 import scipy.integrate as integrate
 
-def simulate_euler(G, t_max, reporter=None, h=0.01):
+def simulate_euler (G, t_max, reporter=None, h=0.01):
     """Simulate continuous-time network dynamics using a 1st order Euler 
     method.
     
@@ -93,7 +93,7 @@ def simulate_euler(G, t_max, reporter=None, h=0.01):
         if reporter != None:
             reporter(G, t)
 
-def simulate_midpoint(G, t_max, reporter=None, h=0.01):
+def simulate_midpoint (G, t_max, reporter=None, h=0.01):
     """Simulate continuous-time network dynamics using a 2nd order modified 
     Euler method (mid-point).
     
@@ -156,7 +156,7 @@ def simulate_midpoint(G, t_max, reporter=None, h=0.01):
         if reporter != None:
             reporter(G, t)
 
-def simulate_rk45(G, t_max, reporter=None, h=0.01):
+def simulate_rk45 (G, t_max, reporter=None, h=0.01):
     """Simulate continuous-time network dynamics using a 4th order Runge Kutta 
     method (Dormand-Prince).
     
@@ -283,8 +283,8 @@ def simulate_rk45(G, t_max, reporter=None, h=0.01):
         # Update t
         t += h
 
-def simulate_ode_fixed(G, ts, node_dim=1, edge_dim=1, rtol=1e-5, atol=1e-5, 
-                      save_final_state=True):
+def simulate_ode_fixed (G, ts, node_dim=1, edge_dim=1, rtol=1e-5, atol=1e-5, 
+                        save_final_state=True):
     """Simulate continuous-time network dynamics using the SciPy odeint 
     function (adaptive step integrator).
     
@@ -379,7 +379,7 @@ def simulate_ode_fixed(G, ts, node_dim=1, edge_dim=1, rtol=1e-5, atol=1e-5,
     # Return the full simulation array
     return res, nmap, emap
 
-def simulate_ode_fixed_fn(y, t, G, nmap, emap):
+def simulate_ode_fixed_fn (y, t, G, nmap, emap):
     # Internal function for calculating network derivitive
     dy = np.zeros(len(y))
     if nmap != None:
@@ -392,7 +392,7 @@ def simulate_ode_fixed_fn(y, t, G, nmap, emap):
             G.edge[e[0]][e[1]]['dyn'](G, e, t, y, dy, nmap, emap)
     return dy
 
-def simulate_steps(G, t_max, reporter=None):
+def simulate_steps (G, t_max, reporter=None):
     """Simulate discrete-time network dynamics.
     
     This is the recommended simulator for most cases. The state of the 
@@ -442,8 +442,8 @@ def simulate_steps(G, t_max, reporter=None):
         if reporter != None:
             reporter(G, t)
 
-def simulate_steps_fixed(G, ts, node_dim=1, edge_dim=1, 
-                         save_final_state=True):
+def simulate_steps_fixed (G, ts, node_dim=1, edge_dim=1, 
+                          save_final_state=True):
     """Simulate discrete-time network dynamics.
     
     For systems where simulation does not lead to a change in the network
@@ -548,7 +548,7 @@ def simulate_steps_fixed(G, ts, node_dim=1, edge_dim=1,
                                                                   edge_dim)]
     return np.array(res), nmap, emap
 
-def state_reporter(G, t):
+def state_reporter (G, t):
     """Simple simulation state reporter that outputs the current time and
     node states.
     
@@ -566,7 +566,7 @@ def state_reporter(G, t):
         output += str(G.node[i]['state']) + ', '
     print output
 
-def rnd_uniform_node_states(G, state_range):
+def rnd_uniform_node_states (G, state_range):
     """Set all node states in a network to a uniformly random value.
     
     To allow for states of dimension > 1, state ranges should be provided for
@@ -595,7 +595,7 @@ def rnd_uniform_node_states(G, state_range):
                                               state_range[s][1]))
             G.node[n]['state'] = np.array(n_state)
 
-def rnd_uniform_edge_states(G, state_range):
+def rnd_uniform_edge_states (G, state_range):
     """Set all edge states in a network to a uniformly random value.
     
     To allow for states of dimension > 1, state ranges should be provided for
@@ -624,7 +624,7 @@ def rnd_uniform_edge_states(G, state_range):
                                               state_range[s][1]))
             G.edge[e[0]][e[1]]['state'] = np.array(e_state)
 
-def set_all_node_dynamics(G, dyn_fn):
+def set_all_node_dynamics (G, dyn_fn):
     """Set the dynamics for all nodes.
     
     Parameters
@@ -639,7 +639,7 @@ def set_all_node_dynamics(G, dyn_fn):
     for n in G.nodes():
         G.node[n]['dyn'] = dyn_fn
 
-def set_all_edge_dynamics(G, dyn_fn):
+def set_all_edge_dynamics (G, dyn_fn):
     """Set the dynamics for all edges.
     
     Parameters
@@ -654,22 +654,25 @@ def set_all_edge_dynamics(G, dyn_fn):
     for e in G.edges():
         G.edge[e[0]][e[1]]['dyn'] = dyn_fn
 
-def no_node_dyn(G, n, t, state):
+def no_node_dyn (G, n, t, state):
     """Null node dynamics (does nothing).
 
     To be used when you want some nodes to have no dynamics.
     """
     return 0.0
 
-def no_edge_dyn(G, source, target, t, state):
+def no_edge_dyn (G, source, target, t, state):
     """Null edge dynamics (does nothing).
 
     To be used when you want some edges to have no dynamics.
     """
     return 0.0
 
-def random_rewire(G, n, allow_self_loops=False):
+def random_rewire (G, n, allow_self_loops=False):
     """Randomly rewire edges.
+
+    This function performs a full rewire i.e., it will ensure the newly created
+    edge contains all the same properties as the original.
     
     Parameters
     ----------
@@ -709,7 +712,7 @@ def random_rewire(G, n, allow_self_loops=False):
             G.remove_edge(u, v)
             G.add_edge(nodes[new_u], nodes[new_v])
 
-def evo_sa_reporter(G, G_perf, iteration):
+def evo_sa_reporter (G, G_perf, iteration):
     """Simple evolutionary state reporter for the simulated annealing evolver.
     
     Outputs the current iteration and performance value for the network.
@@ -728,7 +731,7 @@ def evo_sa_reporter(G, G_perf, iteration):
     """
     print 'Iteration: ' + str(iteration) + ', Performance = ' + str(G_perf)
 
-def boltzmann_accept_prob(d_perf, temperature):
+def boltzmann_accept_prob (d_perf, temperature):
     """Boltzmann accepting probability function for the simulated annealing
     evolver.
     
@@ -828,7 +831,7 @@ def evolve_sa (G, perf_fn, mut_fn, max_iter=100000, max_no_change=100,
         print 'WARNING: Initial temperature was <= 0.0'
     return iteration, cur_G
 
-def evolve_sa_trial(cur_temp, cur_perf, G, mut_fn, perf_fn, accept_prob_fn):
+def evolve_sa_trial (cur_temp, cur_perf, G, mut_fn, perf_fn, accept_prob_fn):
     # Internal function that calculates a simulated annealing trial
     # Make a copy of the system
     G_copy = G.copy()
@@ -862,7 +865,7 @@ def evo_ga_reporter (G_pop_perf, iteration):
     
     Parameters
     ----------
-    G_pop : list([NetworkX graph, float])
+    G_pop_perf : list([NetworkX graph, float])
         Current evolving network population with the performance value.
         
     iteration : int
@@ -873,7 +876,7 @@ def evo_ga_reporter (G_pop_perf, iteration):
         out_str += str(perf[1]) + ', ' 
     print out_str
 
-def evolve_ga(G_pop, perf_fn, reproduce_fn, max_iter=1000,
+def evolve_ga (G_pop, perf_fn, reproduce_fn, max_iter=1000,
               reporter=None):
     """ Evolves a population of networks using a genetic algorithm.
 
@@ -915,21 +918,120 @@ def evolve_ga(G_pop, perf_fn, reproduce_fn, max_iter=1000,
         reporter(cur_pop_perf, max_iter)
     return cur_pop_perf
 
-def graph_random_mutate (G, node_add_prob=0.0, node_del_prob=0.0, 
-                         edge_rewire_prob=0.0, edge_add_prob=0.0, 
-                         edge_del_prob=0.0):
-    """
-    Mutate in place - don't create a new object
-    """
+def evolve_ga_reproduce (G_pop_perf, n_dup_prob=0.02, n_del_prob=0.02,
+                         e_dup_prob=0.02, e_del_prob=0.02, points=1):
+    """ A basic reproduce function that will randomly duplicate and delete 
+    nodes and edges, and perform network crossover on a population of networks 
+    to generate a new candidate population for the genetic algorithm.
+
+    Can be used with default values or called from a user defined
+    function that specifies particular probabilities and crossover points to 
+    use. Due to the reproduction often being highly constrainted in natural and
+    engineered systems, we recommend creating custom versions for the specific
+    system being studied.
+
+    Outputs the new candidate population set (all performance values set to 0).
+
+    Parameters
+    ----------
+    G_pop_perf : list([NetworkX graph, float])
+        Current evolving network population with the performance value.
+
+    n_dup_prob : float (default = 0.02)
+        Node duplication probability.
+
+    n_del_prob : float (default = 0.02)
+        Node deletion probability.
+
+    e_dup_prob : float (default = 0.02)
+        Edge duplication probability.
+
+    e_del_prob : float (default = 0.02)
+        Edge deletion probability.
     
+    points : int (default = 1)
+        Number of crossover points.
+    """
+
     print 'TODO'
 
+
 def graph_crossover (G1, G2, points=1):
+    """ Performs a network based crossover operation on two graphs.
+
+    Outputs the crossovered graph (new object).
+
+    Parameters
+    ----------
+    G1 : NetworkX graph
+        Graph 1 to crossover.
+
+    G2 : NetworkX graph
+        Graph 2 to crossover.
+    
+    points : int (default = 1)
+        Number of crossover points.
     """
-    Returns a new graph object (deepcopy) containing the crossed over graph
-    """
-    # Pick n random numbers and sort - these are the crossover points
-    print 'TODO'
+    # Pick a node number of perform the crossover with
+    nodes_1 = G1.nodes()
+    nodes_2 = G2.nodes()
+    # Randomly choose crossover points (should include check that loop will end)
+    if points >= G1.number_of_nodes():
+        print 'ERROR: Too many crossover points (defaulting to 1).'
+        points = 1
+    n_cross_points = [0]
+    for p in range(points):
+        new_p = int(random.random()*G1.number_of_nodes())
+        while new_p not in n_cross_points:
+            new_p = int(random.random()*G1.number_of_nodes())
+        n_cross_points.append(new_p)
+    n_cross_points = sorted(n_cross_points)
+    # Sets of nodes to extract for each graph
+    g_num = 1
+    ns_1 = []
+    ns_2 = []
+    for p_idx in range(1,len(n_cross_points)):
+        p1_idx = n_cross_points[p_idx-1]
+        p2_idx = n_cross_points[p_idx]
+        if g_num == 1:
+            ns_1 += nodes_1[p1_idx:p2_idx]
+            g_num = 2
+        else:
+            ns_2 += nodes_2[p1_idx:p2_idx]
+            g_num = 1
+    # Handle the case where both lists might include the same nodes (clean up)
+    for i in ns_2:
+        if i in ns_1:
+            # Remove node from list 2
+            ns_2.remove(i)
+    # Generate new network that is a crossover of the two
+    G_cross = nx.create_empty_copy(G1)
+    # Copy graph properties
+    for k in G1.graph.keys():
+        G_cross.graph[k] = G1.graph[k]
+    # Remove all nodes not in ns_1 list
+    for n in ns_1:
+        G_cross.add_node(n)
+        # Copy all properties from G1
+        g1_n = G1.node[n]
+        g1_n_keys = g1_n.keys()
+        for k in g1_n_keys:
+            G_cross.node[n][k] = g1_n[k]
+    # Add all nodes from ns_2
+    for n in ns_2:
+        G_cross.add_node(n)
+        # Copy all properties from G2
+        g2_n = G2.node[n]
+        g2_n_keys = g2_n.keys()
+        for k in g2_n_keys:
+            G_cross.node[n][k] = g2_n[k]
+    # Add edges present where nodes still exist in crossovered graph
+    for n in ns_1:
+        # Check that source and target in new graph, if so add with properties
+        # TODO
+    for n in ns_2:
+        # TODO
+    return G_cross
 
 def write_to_file (G, path, format='gml', node_keys=[], edge_keys=[]):
     """Writes a NetEvo graph to a suitably formatted file for use in 
@@ -939,6 +1041,8 @@ def write_to_file (G, path, format='gml', node_keys=[], edge_keys=[]):
     not correctly handle non-string based labels or lists (often used for 
     parameters). Parameters to convert can be specified.
     
+    Outputs a file in the designated format.
+
     Parameters
     ----------
     G : NetworkX graph
