@@ -854,7 +854,7 @@ def evolve_sa_trial(cur_temp, cur_perf, G, mut_fn, perf_fn, accept_prob_fn):
     # Mutation not accepted
     return False, G, cur_perf
 
-def evo_ga_reporter (G_pop, G_pop_perf, iteration):
+def evo_ga_reporter (G_pop_perf, iteration):
     """Simple evolutionary state reporter for the genetic algorithms evolver.
     
     Outputs the current iteration and performance values for the network
@@ -862,28 +862,58 @@ def evo_ga_reporter (G_pop, G_pop_perf, iteration):
     
     Parameters
     ----------
-    G_pop : list(NetworkX graph)
-        Current evolving network population.
-
-    G_pop_perf :  list(float)
-        List of performance values for each network in the population.
+    G_pop : list([NetworkX graph, float])
+        Current evolving network population with the performance value.
         
     iteration : int
         Iteration of the evolutionary process.
     """
     out_str = 'Iteration: ' + str(iteration) + ', Performance = '
     for perf in G_pop_perf:
-        out_str += str(perf) + ', ' 
+        out_str += str(perf[1]) + ', ' 
     print out_str
 
-def evolve_ga(G_pop, perf_fn, repoduce_fn, max_iter=1000,
-              reporter=evo_ga_reporter):
+def evolve_ga(G_pop, perf_fn, reproduce_fn, max_iter=1000,
+              reporter=None):
+    """ Evolves a population of networks using a genetic algorithm.
+
+    Outputs the evolved population with the accociated performance values.
+
+    Parameters
+    ----------
+    G_pop : list(NetworkX graph)
+        Initial network population.
+    
+    perf_fn : function
+        Performance function to evalulate each candidate network. Lower 
+        performance values are better - evolution minimizes.
+        
+    reproduce_fn : function
+        Function to generate new candidate networks from an existing
+        population with performance values.
+
+    max_iter : int (default = 1000)
+        Maximum number of iterations (generations) to produce.
+
+    reporter : function (optional default=None)
+        Optional reporter called after each evolutionary step.
     """
-    Evolves a population of networks using a genetic algorithm metaheuristic. 
-    Runs each simulation step as a separate process to make use of 
-    multi-processor systems.
-    """
-    print 'TODO'
+    # Copy the population (we don't make changes to the initial one)
+    cur_pop_perf = []
+    for g in G_pop:
+        cur_pop_perf.append([g, 0.0])
+    for it in range(0, max_iter):
+        # Calculate the performance
+        perf_fn(cur_pop_perf)
+        # Report the current performance
+        if reporter != None:
+            reporter(cur_pop_perf, it)
+        # Mate the graphs and update the current population
+        cur_pop_perf = reproduce_fn(cur_pop_perf)
+    # Report the final performance
+    if reporter != None:
+        reporter(cur_pop_perf, max_iter)
+    return cur_pop_perf
 
 def graph_random_mutate (G, node_add_prob=0.0, node_del_prob=0.0, 
                          edge_rewire_prob=0.0, edge_add_prob=0.0, 
