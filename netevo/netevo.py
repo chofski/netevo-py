@@ -1029,8 +1029,10 @@ def graph_crossover (G1, G2, points=1):
     for n in ns_1:
         # Check that source and target in new graph, if so add with properties
         # TODO
+        pass
     for n in ns_2:
         # TODO
+        pass
     return G_cross
 
 def write_to_file (G, path, format='gml', node_keys=[], edge_keys=[]):
