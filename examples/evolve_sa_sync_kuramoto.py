@@ -64,7 +64,7 @@ def order_parameter (G):
     if nx.is_connected(G):
         # Simulate from random initial conditions
         netevo.rnd_uniform_node_states(G, [(0.0, 6.2)])
-        netevo.simulate_steps(G, 100, netevo.no_state_reporter)
+        netevo.simulate_steps(G, 100, None)
         # Calculate the order_parameter and return value
         mu = 0.0
         for i in G.nodes():

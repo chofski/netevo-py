@@ -59,10 +59,10 @@ G1.graph['edge_dyn'] = False
 # Create a pair of identical nodes with different initial states
 G1.add_node(0)
 G1.node[0]['state'] = np.array([2.6, 0.8, 0.9])
-G1.node[0]['dyn'] = rossler_node_dyn
+G1.node[0]['dyn'] = lorenz_node_dyn
 G1.add_node(1)
 G1.node[1]['state'] = np.array([1.2, 2.3, 0.2])
-G1.node[1]['dyn'] = rossler_node_dyn
+G1.node[1]['dyn'] = lorenz_node_dyn
 
 # Connect the nodes with an edge
 G1.add_edge(0,1)
