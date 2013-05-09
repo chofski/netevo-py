@@ -31,18 +31,18 @@ import numpy as np
 
 # Define a function for the discrete node dynamics
 def kuramoto_node_dyn (G, n, t, state):
-	# Parameters
-	natural_freq = 0.2
-	coupling_strength = 0.1
-	
-	# Calculate the new state value
-	sum_coupling = 0.0
-	for i in G[n]:
-		sum_coupling += math.sin(G.node[i]['state'] - state)
-		
-	# Calcuate the new state of the node and return the value
-	return math.fmod(state + natural_freq + (coupling_strength * 
-	                                         sum_coupling), 6.283)
+    # Parameters
+    natural_freq = 0.2
+    coupling_strength = 0.1
+    
+    # Calculate the new state value
+    sum_coupling = 0.0
+    for i in G[n]:
+        sum_coupling += math.sin(G.node[i]['state'] - state)
+        
+    # Calcuate the new state of the node and return the value
+    return math.fmod(state + natural_freq + (coupling_strength * 
+                                             sum_coupling), 6.283)
 
 #=========================================
 # DEFINE MUTATION FUNCTION
@@ -50,10 +50,10 @@ def kuramoto_node_dyn (G, n, t, state):
 
 # Define a function for searching for new networks (random rewire)
 def rewire (G):
-	n_to_rewire = int(random.expovariate(4.0))
-	if n_to_rewire < 1:
-		n_to_rewire = 1
-	netevo.random_rewire (G, n_to_rewire)
+    n_to_rewire = int(random.expovariate(4.0))
+    if n_to_rewire < 1:
+        n_to_rewire = 1
+    netevo.random_rewire (G, n_to_rewire)
 
 #=========================================
 # DEFINE PERFORMANCE MEASURE
@@ -61,24 +61,24 @@ def rewire (G):
 
 # Define a function for the performance measure (smaller = better)
 def order_parameter (G):
-	if nx.is_connected(G):
-		# Simulate from random initial conditions
-		netevo.rnd_uniform_node_states(G, [(0.0, 6.2)])
-		netevo.simulate_steps(G, 100, netevo.no_state_reporter)
-		# Calculate the order_parameter and return value
-		mu = 0.0
-		for i in G.nodes():
-			for j in G.nodes():
-				if i != j:
-					dist = np.linalg.norm(G.node[i]['state'] - 
-					                      G.node[j]['state'])
-					# Heaviside function (allow for some numerical error:0.01)
-					if dist - 0.001 >= 0.0:
-						mu += 100.0
-		return mu * (1.0 / (G.number_of_nodes() * (G.number_of_nodes() - 
-		                                           1.0)));
-	# If the network is not connected it is not valid
-	return float('inf')
+    if nx.is_connected(G):
+        # Simulate from random initial conditions
+        netevo.rnd_uniform_node_states(G, [(0.0, 6.2)])
+        netevo.simulate_steps(G, 100, netevo.no_state_reporter)
+        # Calculate the order_parameter and return value
+        mu = 0.0
+        for i in G.nodes():
+            for j in G.nodes():
+            	if i != j:
+            		dist = np.linalg.norm(G.node[i]['state'] - 
+            		                      G.node[j]['state'])
+            		# Heaviside function (allow for some numerical error:0.01)
+            		if dist - 0.001 >= 0.0:
+            			mu += 100.0
+        return mu * (1.0 / (G.number_of_nodes() * (G.number_of_nodes() - 
+                                                   1.0)));
+    # If the network is not connected it is not valid
+    return float('inf')
 
 #=========================================
 # CREATE THE NETWORK
@@ -88,9 +88,9 @@ def order_parameter (G):
 n = 50
 G = []
 while True:
-	G = nx.gnm_random_graph(n, 2*n)
-	if nx.is_connected(G):
-		break
+    G = nx.gnm_random_graph(n, 2*n)
+    if nx.is_connected(G):
+        break
 
 # No dynamics are required
 G.graph['node_dyn'] = True
@@ -106,7 +106,7 @@ netevo.set_all_node_dynamics(G, kuramoto_node_dyn)
 # performance measure)
 iteration, G_final = netevo.evolve_sa(G, order_parameter, rewire, 
                                       initial_temp=100.0, min_temp=0.00001, 
-                                      reporter=evo_sa_reporter)
+                                      reporter=netevo.evo_sa_reporter)
 
 # Output GML files containing the initial and final toplogies
 netevo.write_to_file(G, 'evolution_sa_dyn_initial.gml')

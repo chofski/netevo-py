@@ -28,10 +28,10 @@ import numpy as np
 
 # Define a function for searching for new networks (random rewire)
 def rewire (G):
-	n_to_rewire = int(random.expovariate(4.0))
-	if n_to_rewire < 1:
-		n_to_rewire = 1
-	netevo.random_rewire (G, n_to_rewire)
+    n_to_rewire = int(random.expovariate(4.0))
+    if n_to_rewire < 1:
+        n_to_rewire = 1
+    netevo.random_rewire (G, n_to_rewire)
 
 #=========================================
 # DEFINE PERFORMANCE MEASURE
@@ -39,16 +39,16 @@ def rewire (G):
 
 # Define a function for the performance measure (eigenratio: smaller = better)
 def eigenratio (G):
-	if nx.is_connected(G):
-		# Calculate the eigenrato (lambda_N/lambda_2)
-		L = nx.laplacian_matrix(G)
-		eigenvalues, eigenvectors = np.linalg.eig(L)
-		idx = eigenvalues.argsort()   
-		eigenvalues = eigenvalues[idx]
-		return eigenvalues[-1] / eigenvalues[1]
-	else:
-		# If the network is not connected it is not valid
-		return float('inf')
+    if nx.is_connected(G):
+        # Calculate the eigenrato (lambda_N/lambda_2)
+        L = nx.laplacian_matrix(G)
+        eigenvalues, eigenvectors = np.linalg.eig(L)
+        idx = eigenvalues.argsort()   
+        eigenvalues = eigenvalues[idx]
+        return eigenvalues[-1] / eigenvalues[1]
+    else:
+        # If the network is not connected it is not valid
+        return float('inf')
 
 #=========================================
 # CREATE THE NETWORK
@@ -58,9 +58,9 @@ def eigenratio (G):
 n = 50
 G = []
 while True:
-	G = nx.gnm_random_graph(n, 2*n)
-	if eigenratio(G) != float('inf'):
-		break
+    G = nx.gnm_random_graph(n, 2*n)
+    if eigenratio(G) != float('inf'):
+        break
 
 # No dynamics are required
 G.graph['node_dyn'] = False
@@ -73,7 +73,7 @@ G.graph['edge_dyn'] = False
 # Perform the evolution
 iteration, G_final = netevo.evolve_sa(G, eigenratio, rewire, 
                                       initial_temp=100.0, min_temp=0.0000001, 
-                                      reporter=evo_sa_reporter)
+                                      reporter=netevo.evo_sa_reporter)
 
 # Output GML files containing the initial and final toplogies
 netevo.write_to_file(G, 'evolution_sa_initial.gml')

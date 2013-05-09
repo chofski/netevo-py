@@ -26,24 +26,24 @@ import numpy as np
 #=========================================
 
 # Define a function for the continuous node dynamics
-def lorenz_node_dyn (G, n, t, state):	
-	# Parameters
-	sigma = 28.0
-	rho = 10.0
-	beta = 8.0/3.0
+def lorenz_node_dyn (G, n, t, state):    
+    # Parameters
+    sigma = 28.0
+    rho = 10.0
+    beta = 8.0/3.0
 
-	# Calculate the new state value
-	c = np.zeros(np.size(state,0))
-	coupling = 0.1
-	for i in G.neighbors(n):
-		c += -coupling * (G.node[i]['state'] - state)
-	
-	v1 = (sigma    * (state[1] - state[0]))       - c[0]
-	v2 = (state[0] * (rho - state[2]) - state[1]) - c[1]
-	v3 = (state[0] * state[1] - beta * state[2])  - c[2]
-	
-	# Return the new state value for the node
-	return np.array([v1, v2, v3])
+    # Calculate the new state value
+    c = np.zeros(np.size(state,0))
+    coupling = 0.1
+    for i in G.neighbors(n):
+        c += -coupling * (G.node[i]['state'] - state)
+    
+    v1 = (sigma    * (state[1] - state[0]))       - c[0]
+    v2 = (state[0] * (rho - state[2]) - state[1]) - c[1]
+    v3 = (state[0] * state[1] - beta * state[2])  - c[2]
+    
+    # Return the new state value for the node
+    return np.array([v1, v2, v3])
 
 #=========================================
 # CREATE THE DYNAMICAL NETWORK

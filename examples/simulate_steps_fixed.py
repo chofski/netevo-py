@@ -25,18 +25,18 @@ import networkx as nx
 
 # Define a function for the discrete node dynamics
 def kuramoto_node_dyn (G, n, t, y, dy, nmap, emap):
-	# Parameters
-	natural_freq = 0.1
-	coupling_strength = 0.2
-	
-	# Calculate the new state value
-	sum_coupling = 0.0
-	for i in G.neighbors(n):
-		sum_coupling += math.sin(y[nmap[i]] - y[nmap[n]])
-		
-	# Calcuate the new state of the node and return the value
-	dy[nmap[n]] = math.fmod(y[nmap[n]] + natural_freq + (coupling_strength * 
-	                                                     sum_coupling), 6.283)
+    # Parameters
+    natural_freq = 0.1
+    coupling_strength = 0.2
+    
+    # Calculate the new state value
+    sum_coupling = 0.0
+    for i in G.neighbors(n):
+        sum_coupling += math.sin(y[nmap[i]] - y[nmap[n]])
+        
+    # Calcuate the new state of the node and return the value
+    dy[nmap[n]] = math.fmod(y[nmap[n]] + natural_freq + (coupling_strength * 
+                                                         sum_coupling), 6.283)
 
 #=========================================
 # CREATE THE DYNAMICAL NETWORK
@@ -53,10 +53,10 @@ G.graph['edge_dyn'] = False
 n_nodes = 4
 G.add_node(0)
 for i in range(1, n_nodes):
-	# Create the node
-	G.add_node(i)
-	# Connect it to the previous node in the ring
-	G.add_edge(i-1, i)
+    # Create the node
+    G.add_node(i)
+    # Connect it to the previous node in the ring
+    G.add_edge(i-1, i)
 # Finish the ring
 G.add_edge(i, 0)
 

@@ -18,26 +18,27 @@ import math
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 #=========================================
 # DEFINE THE DYNAMICS
 #=========================================
 
-def kuramoto_node_dyn (G, n, t, state):	
-	# Parameters
-	natural_freq = 0.3
-	coupling_strength = 0.4
-	# Calculate the new state value
-	sum_coupling = 0.0
-	for i in G.neighbors(n):
-		sum_coupling += math.sin(G.node[i]['state'] - state)
-	return math.fmod(state + natural_freq + (coupling_strength * 
-	                                         sum_coupling), 6.283)
+def kuramoto_node_dyn (G, n, t, state):
+    # Parameters
+    natural_freq = 0.3
+    coupling_strength = 0.4
+    # Calculate the new state value
+    sum_coupling = 0.0
+    for i in G.neighbors(n):
+        sum_coupling += math.sin(G.node[i]['state'] - state)
+    return math.fmod(state + natural_freq + (coupling_strength * 
+                                             sum_coupling), 6.283)
 
 #=========================================
 # CREATE THE NETWORK
 #=========================================
-	
+    
 # Create an undirected graph with only node dynamics
 G = nx.Graph()
 G.graph['node_dyn'] = True
@@ -47,8 +48,8 @@ G.graph['edge_dyn'] = False
 n_nodes = 30
 G.add_node(0)
 for i in range(1, n_nodes):
-	G.add_node(i)
-	G.add_edge(i-1, i)
+    G.add_node(i)
+    G.add_edge(i-1, i)
 G.add_edge(i, 0)
 
 # All nodes are Kuramoto oscillators (discrete-time)
@@ -69,26 +70,33 @@ pos=nx.circular_layout(G)
 
 # A visual reporter that will display the current state of the network
 # as it is being simulated
+#ims = []
+plt.show()
 def visual_reporter (G, t):
-	# Clear the figure
-	plt.clf()
-	n_sizes = []
-	# Calculate the sizes of the nodes (their state)
-	for i in G.nodes():
-		new_size = 100.0 * G.node[i]['state']
-		if new_size < 1.0: new_size = 1
-		n_sizes.append(new_size)
-	# Draw the network and update the canvas
-	nx.draw(G, pos, node_size=n_sizes, node_color='#A0CBE2', width=4, 
-	        with_labels=False)
-	fig.canvas.draw()
+    # Clear the figure
+    plt.clf()
+    n_sizes = []
+    # Calculate the sizes of the nodes (their state)
+    for i in G.nodes():
+        new_size = 100.0 * G.node[i]['state']
+        if new_size < 1.0: new_size = 1
+        n_sizes.append(new_size)
+    # Draw the network and update the canvas
+    nx.draw(G, pos, node_size=n_sizes, node_color='#A0CBE2', width=4, 
+            with_labels=False)
+    im = fig.canvas.draw()
+    #im = plt.imshow()
+    #im = plt.draw()
+    #ims.append([im])
+
 
 #=========================================
 # SIMULATE THE DYNAMICS
 #=========================================
-	
+    
 # Simulate the dynamics (discrete-time) using the visual reporter
 netevo.simulate_steps(G, 200, visual_reporter)
+#ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=2000)
 
 # Close the visualization
 plt.close()

@@ -1029,9 +1029,17 @@ def graph_crossover (G1, G2, points=1):
     #for n in ns_1:
         # Check that source and target in new graph, if so add with properties
         # TODO
+<<<<<<< HEAD
     #    for n in ns_2:
         # TODO
     #return G_cross
+=======
+        pass
+    for n in ns_2:
+        # TODO
+        pass
+    return G_cross
+>>>>>>> 5edb3e9a763d8b3d46f326ea0399afde383ee616
 
 def write_to_file (G, path, format='gml', node_keys=[], edge_keys=[]):
     """Writes a NetEvo graph to a suitably formatted file for use in 
