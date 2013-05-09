@@ -28,19 +28,19 @@ import numpy as np
 #=========================================
 
 # Define a function for the continuous node dynamics
-def rossler_node_dyn (G, n, t, y, dy, nmap, emap):	
-	# Parameters
-	coupling = 0.3
-	# Calculate the coupling factor
-	c1 = 0.0
-	c3 = 0.0
-	for i in G.neighbors(n):
-		c1 += coupling * (y[nmap[i]] - y[nmap[n]])
-		c3 += coupling * (y[nmap[i]+2] - y[nmap[n]+2])
-	# Calculate the derivative (include the coupling factors)
-	dy[nmap[n]]   = -y[nmap[n]+1] - y[nmap[n]+2] + c1   
-	dy[nmap[n]+1] = y[nmap[n]] + 0.165 * y[nmap[n]+1]
-	dy[nmap[n]+2] = 0.2 + (y[nmap[n]] - 10.0) * y[nmap[n]+2] + c3 
+def rossler_node_dyn (G, n, t, y, dy, nmap, emap):    
+    # Parameters
+    coupling = 0.3
+    # Calculate the coupling factor
+    c1 = 0.0
+    c3 = 0.0
+    for i in G.neighbors(n):
+        c1 += coupling * (y[nmap[i]] - y[nmap[n]])
+        c3 += coupling * (y[nmap[i]+2] - y[nmap[n]+2])
+    # Calculate the derivative (include the coupling factors)
+    dy[nmap[n]]   = -y[nmap[n]+1] - y[nmap[n]+2] + c1   
+    dy[nmap[n]+1] = y[nmap[n]] + 0.165 * y[nmap[n]+1]
+    dy[nmap[n]+2] = 0.2 + (y[nmap[n]] - 10.0) * y[nmap[n]+2] + c3 
 
 #=========================================
 # CREATE THE NETWORK
@@ -50,9 +50,9 @@ def rossler_node_dyn (G, n, t, y, dy, nmap, emap):
 n = 50
 G = []
 while True:
-	G = nx.gnm_random_graph(n, 2*n)
-	if nx.is_connected(G):
-		break
+    G = nx.gnm_random_graph(n, 2*n)
+    if nx.is_connected(G):
+        break
 
 # Only node dynamics are required - should all be chaotic Rossler oscillators
 G.graph['node_dyn'] = True
@@ -74,10 +74,10 @@ print "Simulation Results:"
 print '================================='
 print "For t = 0:"
 for n in G.nodes():
-	print "Node ", n, " = [", res[0][nmap[n]], ', ', res[0][nmap[n]+1], ', ' \
-	      , res[0][nmap[n]+2], ']' 
+    print "Node ", n, " = [", res[0][nmap[n]], ', ', res[0][nmap[n]+1], ', ' \
+          , res[0][nmap[n]+2], ']' 
 print '================================='
 print "For t = 20:"
 for n in G.nodes():
-	print "Node ", n, " = [", res[2][nmap[n]], ', ', res[2][nmap[n]+1], ', ' \
-	      , res[2][nmap[n]+2], ']' 
+    print "Node ", n, " = [", res[2][nmap[n]], ', ', res[2][nmap[n]+1], ', ' \
+          , res[2][nmap[n]+2], ']' 
