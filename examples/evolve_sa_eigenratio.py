@@ -73,7 +73,7 @@ G.graph['edge_dyn'] = False
 # Perform the evolution
 iteration, G_final = netevo.evolve_sa(G, eigenratio, rewire, 
                                       initial_temp=100.0, min_temp=0.0000001, 
-                                      reporter=evo_sa_reporter)
+                                      reporter=netevo.evo_sa_reporter)
 
 # Output GML files containing the initial and final toplogies
 netevo.write_to_file(G, 'evolution_sa_initial.gml')

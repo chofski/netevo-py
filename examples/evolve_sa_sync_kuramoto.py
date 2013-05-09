@@ -106,7 +106,7 @@ netevo.set_all_node_dynamics(G, kuramoto_node_dyn)
 # performance measure)
 iteration, G_final = netevo.evolve_sa(G, order_parameter, rewire, 
                                       initial_temp=100.0, min_temp=0.00001, 
-                                      reporter=evo_sa_reporter)
+                                      reporter=netevo.evo_sa_reporter)
 
 # Output GML files containing the initial and final toplogies
 netevo.write_to_file(G, 'evolution_sa_dyn_initial.gml')
