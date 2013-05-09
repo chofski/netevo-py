@@ -1026,12 +1026,12 @@ def graph_crossover (G1, G2, points=1):
         for k in g2_n_keys:
             G_cross.node[n][k] = g2_n[k]
     # Add edges present where nodes still exist in crossovered graph
-    for n in ns_1:
+    #for n in ns_1:
         # Check that source and target in new graph, if so add with properties
         # TODO
-    for n in ns_2:
+    #    for n in ns_2:
         # TODO
-    return G_cross
+    #return G_cross
 
 def write_to_file (G, path, format='gml', node_keys=[], edge_keys=[]):
     """Writes a NetEvo graph to a suitably formatted file for use in 
