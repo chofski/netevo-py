@@ -112,4 +112,4 @@ iteration, G_final = netevo.evolve_sa(G, order_parameter, rewire,
 
 # Output GML files containing the initial and final toplogies (viewable in Cytoscape/yEd)
 netevo.write_to_file(G, 'evolution_sa_dyn_initial.gml')
-netevo.write_to_file(G_final, 'evolution_sa_dyn_final.gml')
+netevo.write_to_file(G_final, 'evolution_sa_dyn_final.gml', node_keys=['state'])
