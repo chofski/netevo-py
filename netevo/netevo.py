@@ -661,7 +661,7 @@ def no_node_dyn (G, n, t, state):
     """
     return 0.0
 
-def no_edge_dyn (G, source, target, t, state):
+def no_edge_dyn (G, e, t, state):
     """Null edge dynamics (does nothing).
 
     To be used when you want some edges to have no dynamics.
@@ -952,8 +952,7 @@ def evolve_ga_reproduce (G_pop_perf, n_dup_prob=0.02, n_del_prob=0.02,
     points : int (default = 1)
         Number of crossover points.
     """
-
-    print 'TODO'
+    print 'WARNING: Currently not implemented.'
 
 
 def graph_crossover (G1, G2, points=1):

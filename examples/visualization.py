@@ -18,7 +18,7 @@ import math
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+import pylab
 
 #=========================================
 # DEFINE THE DYNAMICS
@@ -62,16 +62,16 @@ netevo.rnd_uniform_node_states (G, [(0.0, 6.2)])
 # DEFINE THE VISUAL REPORTER
 #=========================================
 
+# Turn on animation in pylab
+# http://stackoverflow.com/questions/8965055/basic-animation-with-matplotlibs-pyplot
+pylab.ion()
 # Create the figure to display the visualization
 fig = plt.figure(figsize=(6,6))
-
 # Node positions to use for the visualization
 pos=nx.circular_layout(G)
 
 # A visual reporter that will display the current state of the network
 # as it is being simulated
-#ims = []
-plt.show()
 def visual_reporter (G, t):
     # Clear the figure
     plt.clf()
@@ -84,11 +84,7 @@ def visual_reporter (G, t):
     # Draw the network and update the canvas
     nx.draw(G, pos, node_size=n_sizes, node_color='#A0CBE2', width=4, 
             with_labels=False)
-    im = fig.canvas.draw()
-    #im = plt.imshow()
-    #im = plt.draw()
-    #ims.append([im])
-
+    pylab.draw()
 
 #=========================================
 # SIMULATE THE DYNAMICS
@@ -96,7 +92,6 @@ def visual_reporter (G, t):
     
 # Simulate the dynamics (discrete-time) using the visual reporter
 netevo.simulate_steps(G, 200, visual_reporter)
-#ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=2000)
 
 # Close the visualization
 plt.close()

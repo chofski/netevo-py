@@ -15,11 +15,11 @@ displays the same dynamics as the pinner. The final state is output to file.
 import sys
 sys.path.append('../netevo')
 import netevo
-
 import math
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
+import pylab
 
 #=========================================
 # DEFINE THE DYNAMICS
@@ -37,19 +37,31 @@ def lorenz_node_dyn (G, n, t, state):
     v3 = (state[0] * state[1] - (8.0/3.0) * state[2])  - c[2]
     return np.array([v1, v2, v3])
 
-# The adaptive edge law defined by De Lellis et al. (dimension = 1)
-def adaptive_law_edge_dyn (G, e, t, state):
-    s1 = G.node[e[0]]['state']
-    s2 = G.node[e[1]]['state']
-    dist = np.linalg.norm(s1-s2)
-    return 0.08 * dist
+# Dynamics for the pinner (no coupling)
+def pinner_node_dyn (G, n, t, state):
+    # Calculate the derivative
+    v1 = (28.0    * (state[1] - state[0])) 
+    v2 = (state[0] * (10.0 - state[2]) - state[1])
+    v3 = (state[0] * state[1] - (8.0/3.0) * state[2])
+    return np.array([v1, v2, v3])
 
 #=========================================
 # CREATE THE NETWORK
 #=========================================
 
 # Create a fully connected graph
-G = nx.complete_graph(12)
+#G = nx.complete_graph(12)
+
+G = nx.Graph()
+G.add_node(0)
+for i in range(1, 12):
+    G.add_node(i)
+    G.add_edge(i-1, i)
+G.add_node(12)
+
+for n in range(12):
+    G.node[n]['color'] = 'b'
+G.node[12]['color'] = 'r'
 
 # Both node and edge dynamics are required
 G.graph['node_dyn'] = True
@@ -58,44 +70,78 @@ G.graph['edge_dyn'] = True
 # All nodes are chaotic Lorenz oscillators
 netevo.set_all_node_dynamics(G, lorenz_node_dyn)
 # All edges follow the adaptive rule
-netevo.set_all_edge_dynamics(G, adaptive_law_edge_dyn)
+netevo.set_all_edge_dynamics(G, netevo.no_edge_dyn)
 
 # Randomly assign node states
-netevo.rnd_uniform_node_states (G, [(0.1, 20.0), (0.1, 20.0), (0.1, 20.0)])
+netevo.rnd_uniform_node_states (G, [(3.0, 10.0), (3.0, 10.0), (3.0, 10.0)])
 # Edges all start with a very weak strength
-netevo.rnd_uniform_edge_states (G, [(0.00000001, 0.00000001)])
+netevo.rnd_uniform_edge_states (G, [(0.3, 0.3)])
+
+# Our pinning node has no dynamics just fixed states that change
+G.node[12]['state'] = [30.0, 30.0, 30.0]
+G.node[12]['dyn'] = pinner_node_dyn
 
 #=========================================
 # DEFINE THE VISUAL REPORTER
 #=========================================
 
+# Turn on animation in pylab
+# http://stackoverflow.com/questions/8965055/basic-animation-with-matplotlibs-pyplot
+pylab.ion()
 # Create the figure to display the visualization
 fig = plt.figure(figsize=(6.5,6.5))
 # Node positions to use for the visualization
 pos=nx.circular_layout(G)
+
+n_colors = []
+for i in G.nodes():
+    n_colors.append(G.node[i]['color'])
+
 # Function to generate the visualisation of the network
+# in addition this also updates the topology during the simulation
 def visual_reporter (G, t):
+    if t > 0.99 and t < 1.01:
+        # Add edge for the pinning (non-adaptive)
+        G.add_edge(12, 5)
+        G.edge[12][5]['dyn'] = netevo.no_edge_dyn
+        G.edge[12][5]['state'] = 0.95
+        G.add_edge(12, 2)
+        G.edge[12][2]['dyn'] = netevo.no_edge_dyn
+        G.edge[12][2]['state'] = 0.95
+    if t > 2.99 and t < 3.01:
+        G.add_edge(12, 9)
+        G.edge[12][9]['dyn'] = netevo.no_edge_dyn
+        G.edge[12][9]['state'] = 0.95
+        G.node[12]['state'] = np.array([30.0, 30.0, 30.0])
+    # Draw the graph
     plt.clf()
     n_sizes = []
     for i in G.nodes():
-        new_size = 100.0 * G.node[i]['state'][0]
+        new_size = 300.0 * G.node[i]['state'][1]
         if new_size < 1.0: new_size = 1
         n_sizes.append(new_size)
     e_sizes = []
     for i in G.edges():
-        e_sizes.append(G.edge[i[0]][i[1]]['state'])
-    nx.draw(G, pos, node_size=n_sizes, node_color='#A0CBE2', 
+        if i[1] == 12 and i[0] == 5:
+            e_sizes.append(1.0)
+        else:
+            e_sizes.append(G.edge[i[0]][i[1]]['state'])
+    nx.draw(G, pos, node_size=n_sizes, node_color=n_colors, 
             edge_color=e_sizes, edge_vmin=0.0, edge_vmax=1.0, width=4,
             edge_cmap=plt.cm.Blues, with_labels=False)
-    fig.canvas.draw()
+    pylab.draw()
 
 #=========================================
 # SIMULATE THE DYNAMICS
 #=========================================
     
-# Simulate the network dynamics
-netevo.simulate_rk45 (G, 1.7, visual_reporter)
+# Save initial state
+visual_reporter (G, 0.0)
+plt.savefig('control_sync_pinning-start_state.png')
+
+# Simulate the network dynamics (this simulator allows for the network size to change)
+netevo.simulate_rk45 (G, 7.0, visual_reporter)
 
 # Save and then close the visualization
-plt.savefig('control_sync_pinning-final_state.png')
+plt.savefig('control_sync_pinning-end_state.png')
 plt.close()

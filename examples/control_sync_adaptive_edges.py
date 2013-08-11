@@ -18,11 +18,11 @@ topology saved as an image file.
 import sys
 sys.path.append('../netevo')
 import netevo
-
 import math
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
+import pylab
 
 #=========================================
 # DEFINE THE DYNAMICS
@@ -72,12 +72,17 @@ netevo.rnd_uniform_edge_states(G, [(0.00000001, 0.00000001)])
 # DEFINE THE VISUAL REPORTER
 #=========================================
 
+# Turn on animation in pylab
+# http://stackoverflow.com/questions/8965055/basic-animation-with-matplotlibs-pyplot
+pylab.ion()
 # Create the figure to display the visualization
 fig = plt.figure(figsize=(6.5,6.5))
 # Node positions to use for the visualization
 pos = nx.circular_layout(G)
+
 # Function to generate the visualisation of the network
 def visual_reporter (G, t):
+    # Draw the graph
     plt.clf()
     n_sizes = []
     for i in G.nodes():
@@ -90,15 +95,22 @@ def visual_reporter (G, t):
     nx.draw(G, pos, node_size=n_sizes, node_color='#A0CBE2', 
             edge_color=e_sizes, edge_vmin=0.0, edge_vmax=1.0, width=4,
             edge_cmap=plt.cm.Blues, with_labels=False)
-    fig.canvas.draw()
+    pylab.draw()
+    # Save version during the evolution
+    if t > 0.3 and t < 0.31:
+        plt.savefig('control_sync_adaptive_edges-middle_state.png')
 
 #=========================================
 # SIMULATE THE DYNAMICS
 #=========================================
-    
+
+# Save initial topology
+visual_reporter(G, 0.0) 
+plt.savefig('control_sync_adaptive_edges-start_state.png')
+
 # Simulate the network dynamics
-netevo.simulate_rk45(G, 1.7, visual_reporter)
+netevo.simulate_rk45(G, 2.0, visual_reporter)
 
 # Save and then close the visualization
-plt.savefig('control_sync_adaptive_edges-final_state.png')
+plt.savefig('control_sync_adaptive_edges-end_state.png')
 plt.close()
