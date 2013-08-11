@@ -5,4 +5,6 @@ NetEvo is a computing framework designed to allow researchers to investigate evo
     
 NetEvo is writen in Python and makes use of the networkx, numpy, and SciPy packages.
 
+The project website can be found at: http://www.netevo.org
+
 NetEvo is free software, you can redistribute it and/or modify it under the terms of the Non-Profit Open Software License ("Non-Profit OSL") 3.0. See the COPYING file for further details.
