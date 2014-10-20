@@ -690,7 +690,7 @@ def random_rewire (G, n, allow_self_loops=False):
     edges = G.edges()
     for i in range(n):
         # Pick a random edge
-        (u, v) = edges[int(random.random()*G.number_of_edges())]
+        (u, v) = edges[int(random.random()*G.number_of_edges())-1]
         # Attempt to find a new random edge (maximum 1000 trials)
         trial = 0
         while trial < 1000:
